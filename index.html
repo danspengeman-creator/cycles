@@ -621,14 +621,19 @@ function getDayTip(phase) {
 async function fetchData() {
   try {
     const url = `${SCRIPT_URL}?action=read&t=${Date.now()}`;
+    console.log("Fetching:", url);
     const res = await fetch(url);
-    const json = await res.json();
+    const text = await res.text();
+    console.log("Raw response:", text);
+    const json = JSON.parse(text);
+    console.log("Parsed JSON:", json);
+    console.log("Period dates from sheet:", json.periodDates);
     return {
       periodDates: (json.periodDates || []).sort(),
       signalDates: (json.signalDates || []).sort()
     };
   } catch(e) {
-    console.warn("Using fallback data:", e);
+    console.warn("Fetch failed, using fallback:", e);
     return {
       periodDates: [...PERIOD_DATES_FB].sort(),
       signalDates: [...SIGNAL_DATES_FB].sort()
