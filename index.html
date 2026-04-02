@@ -37,8 +37,15 @@
   }
 
   /* ── HEADER ── */
+  @keyframes gradientShift {
+    0%   { background-position: 0% 50%; }
+    50%  { background-position: 100% 50%; }
+    100% { background-position: 0% 50%; }
+  }
   .header {
-    background: linear-gradient(160deg, #7B4F8E 0%, #E8678A 100%);
+    background: linear-gradient(135deg, #7B4F8E, #E8678A, #C45E8A, #9B5FA0, #7B4F8E);
+    background-size: 300% 300%;
+    animation: gradientShift 8s ease infinite;
     padding: 2.5rem 1.5rem 3.5rem;
     position: relative;
     overflow: hidden;
