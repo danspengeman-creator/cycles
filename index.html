@@ -860,7 +860,7 @@ function render(periodDates, signalDates) {
     </div>
 
     <button class="log-btn fadein" onclick="openLog()">🩸 Log period start</button>
-    <button class="signal-btn fadein" onclick="openSignal()">💜 Let Dan know tonight works</button>
+    <button class="signal-btn fadein" onclick="openSignal()">💜 Send Dan a signal</button>
 
     <div style="padding:1.5rem 1rem 0;font-size:11px;color:var(--ink-lt);text-align:center">
       Cycle data is private and stored only in a password-protected Google Sheet.
@@ -893,15 +893,27 @@ function openLogForDate(iso) {
 }
 
 function openSignal() {
-  const iso = toISO(new Date());
+  const today = new Date();
+  const days = [];
+  for (let i = 0; i < 7; i++) {
+    const d = new Date(today.getFullYear(), today.getMonth(), today.getDate() + i);
+    const iso = toISO(d);
+    const label = i === 0 ? 'Tonight' : i === 1 ? 'Tomorrow night' :
+      d.toLocaleDateString('en-US', { weekday: 'long' }) + ' night';
+    const sub = d.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+    days.push({ iso, label, sub });
+  }
+
   document.getElementById('modal-title').textContent = 'Send Dan a signal';
-  document.getElementById('modal-sub').textContent = "This will let him know tonight works for intimacy.";
+  document.getElementById('modal-sub').textContent = 'Pick a night and he\'ll get a heads up.';
   document.getElementById('modal-msg').textContent = '';
   document.getElementById('modal-msg').className = 'modal-msg';
-  document.getElementById('modal-btns').innerHTML = `
-    <button class="mbtn primary" onclick="submitLog('signal','${iso}')">💜 Yes, send the signal</button>
-    <button class="mbtn cancel" onclick="closeModal()">Not tonight</button>
-  `;
+  document.getElementById('modal-btns').innerHTML = days.map(d => `
+    <button class="mbtn signal-date-btn" onclick="submitLog('signal','${d.iso}')" style="display:flex;justify-content:space-between;align-items:center;background:var(--mist);border:1px solid var(--border);color:var(--ink);text-align:left;padding:13px 16px;">
+      <span style="font-weight:500">${d.label}</span>
+      <span style="font-size:13px;color:var(--ink-lt);font-weight:400">${d.sub}</span>
+    </button>
+  `).join('') + `<button class="mbtn cancel" onclick="closeModal()" style="margin-top:4px">Never mind</button>`;
   document.getElementById('modal').classList.add('open');
 }
 
