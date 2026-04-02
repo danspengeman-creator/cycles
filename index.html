@@ -303,20 +303,20 @@
   .cal-legend {
     display: flex;
     flex-wrap: wrap;
-    gap: 8px;
-    margin-top: 0.75rem;
+    gap: 7px;
+    margin-top: 0.85rem;
+    justify-content: center;
   }
-  .leg-item {
-    display: flex;
-    align-items: center;
-    gap: 5px;
-    font-size: 11px;
-    color: var(--ink-lt);
+  .leg-chip {
+    font-size: 12px;
+    font-weight: 500;
+    padding: 5px 11px;
+    border-radius: 100px;
+    cursor: pointer;
+    transition: transform 0.1s, opacity 0.1s;
+    user-select: none;
   }
-  .leg-dot {
-    width: 10px; height: 10px;
-    border-radius: 3px;
-  }
+  .leg-chip:active { transform: scale(0.94); opacity: 0.8; }
 
   /* ── LOG BUTTON ── */
   .log-btn {
@@ -702,7 +702,10 @@ function buildCalendar(periodDates, signalDates, len, offset) {
   let html = `
     <div class="cal-nav">
       <button class="cal-nav-btn" onclick="changeMonth(-1)">‹</button>
-      <span class="cal-month">${MONTHS[month]} ${year}</span>
+      <div style="text-align:center">
+        <span class="cal-month">${MONTHS[month]} ${year}</span>
+        ${offset > 0 ? '<div style="font-size:11px;color:var(--ink-lt);margin-top:2px;font-style:italic">Estimated cycle based on data</div>' : ''}
+      </div>
       <button class="cal-nav-btn" onclick="changeMonth(1)">›</button>
     </div>
     <div class="cal-grid">
@@ -721,11 +724,11 @@ function buildCalendar(periodDates, signalDates, len, offset) {
 
   html += `</div>
     <div class="cal-legend">
-      <div class="leg-item"><div class="leg-dot" style="background:#E8D4EE"></div> Period</div>
-      <div class="leg-item"><div class="leg-dot" style="background:var(--rose-lt)"></div> Ovulation</div>
-      <div class="leg-item"><div class="leg-dot" style="background:#FDEAE0"></div> Fertile</div>
-      <div class="leg-item"><div class="leg-dot" style="background:var(--sage-lt)"></div> Luteal</div>
-      <div class="leg-item"><div class="leg-dot" style="background:var(--blue-lt)"></div> PMS</div>
+      <span class="leg-chip" onclick="openPhaseInfo('period')" style="background:#E8D4EE;color:#7B4F8E">🌙 Period</span>
+      <span class="leg-chip" onclick="openPhaseInfo('ovulation')" style="background:var(--rose-lt);color:#C45E8A">✨ Ovulation</span>
+      <span class="leg-chip" onclick="openPhaseInfo('fertile')" style="background:#FDEAE0;color:#D4845A">🌿 Fertile</span>
+      <span class="leg-chip" onclick="openPhaseInfo('luteal')" style="background:var(--sage-lt);color:#5FA67A">🍂 Luteal</span>
+      <span class="leg-chip" onclick="openPhaseInfo('pms')" style="background:var(--blue-lt);color:#5B8DB8">🌧 PMS</span>
     </div>`;
   return html;
 }
@@ -953,6 +956,85 @@ function playSignalChime() {
       osc.stop(ctx.currentTime + i * 0.12 + 0.35);
     });
   } catch(e) {}
+}
+
+
+// ── PHASE INFO ──
+const PHASE_INFO = {
+  period: {
+    emoji: '🌙',
+    name: 'Menstrual (Period)',
+    duration: 'Days 1–5',
+    color: '#7B4F8E',
+    bg: '#F0E6F7',
+    how: 'Hormone levels drop to their lowest point. You may feel tired, crampy, emotional or craving comfort and rest. It\'s completely normal to feel low-energy and want to be alone.',
+    physical: 'Cramping, bloating, lower back ache, tender breasts, fatigue, headaches.',
+    tip: 'Your body is doing a lot of work. Rest, warmth and gentle movement are your best friends right now.'
+  },
+  ovulation: {
+    emoji: '✨',
+    name: 'Ovulation',
+    duration: 'Days 13–16 (approx)',
+    color: '#C45E8A',
+    bg: '#FEF0F4',
+    how: 'Estrogen and testosterone peak — you\'ll likely feel your most energetic, confident and social. Many women feel their most attractive and communicative during this window.',
+    physical: 'Mild pelvic twinge (mittelschmerz), clear stretchy discharge, heightened senses, slight temperature rise.',
+    tip: 'This is your peak window for connection, creativity and confidence. Make the most of it.'
+  },
+  fertile: {
+    emoji: '🌿',
+    name: 'Fertile Window',
+    duration: 'Days 10–16 (approx)',
+    color: '#D4845A',
+    bg: '#FDF3EC',
+    how: 'Estrogen is climbing steadily. You\'ll notice your mood, energy and libido rising. You\'re more sociable, optimistic and open to new experiences than earlier in your cycle.',
+    physical: 'Increasing cervical mucus, rising energy, improved skin, sharper focus.',
+    tip: 'A great time for dates, adventures and anything that excites you. Your body is in a naturally receptive state.'
+  },
+  luteal: {
+    emoji: '🍂',
+    name: 'Luteal Phase',
+    duration: 'Days 17–24 (approx)',
+    color: '#5FA67A',
+    bg: '#EBF6F1',
+    how: 'Progesterone rises and you may shift inward — craving quiet, routine and cozy evenings. Energy gradually decreases. Mood can fluctuate as hormones change.',
+    physical: 'Bloating, breast tenderness, food cravings, mild fatigue, mood shifts.',
+    tip: 'Protect your energy. Nourishing food, journaling and early nights will help you feel your best.'
+  },
+  pms: {
+    emoji: '🌧',
+    name: 'Late Luteal / PMS',
+    duration: 'Days 25–28 (approx)',
+    color: '#5B8DB8',
+    bg: '#EBF3FA',
+    how: 'Hormone levels drop ahead of your period. Feelings of irritability, anxiety or low mood are very common and completely valid. Your body is preparing for a new cycle.',
+    physical: 'Irritability, anxiety, bloating, breakouts, sleep disruption, heightened sensitivity.',
+    tip: 'Be extra gentle with yourself. Magnesium, reduced caffeine and low-key plans can make a real difference.'
+  }
+};
+
+function openPhaseInfo(key) {
+  const p = PHASE_INFO[key];
+  document.getElementById('modal-title').innerHTML = p.emoji + ' ' + p.name;
+  document.getElementById('modal-sub').textContent = 'Typically: ' + p.duration;
+  document.getElementById('modal-msg').textContent = '';
+  document.getElementById('modal-msg').className = 'modal-msg';
+  document.getElementById('modal-btns').innerHTML = `
+    <div style="background:${p.bg};border-radius:12px;padding:1rem;margin-bottom:10px;text-align:left">
+      <div style="font-size:12px;font-weight:600;text-transform:uppercase;letter-spacing:0.05em;color:${p.color};margin-bottom:6px">How you may feel</div>
+      <div style="font-size:14px;color:var(--ink-mid);line-height:1.5">${p.how}</div>
+    </div>
+    <div style="background:var(--mist);border-radius:12px;padding:1rem;margin-bottom:10px;text-align:left">
+      <div style="font-size:12px;font-weight:600;text-transform:uppercase;letter-spacing:0.05em;color:var(--ink-lt);margin-bottom:6px">Common symptoms</div>
+      <div style="font-size:14px;color:var(--ink-mid);line-height:1.5">${p.physical}</div>
+    </div>
+    <div style="background:#FFF8F0;border-radius:12px;padding:1rem;margin-bottom:14px;text-align:left">
+      <div style="font-size:12px;font-weight:600;text-transform:uppercase;letter-spacing:0.05em;color:#D4845A;margin-bottom:6px">💡 Tip</div>
+      <div style="font-size:14px;color:var(--ink-mid);line-height:1.5">${p.tip}</div>
+    </div>
+    <button class="mbtn cancel" onclick="closeModal()">Close</button>
+  `;
+  document.getElementById('modal').classList.add('open');
 }
 
 // ── INIT ──
