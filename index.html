@@ -316,12 +316,12 @@ function render(periodDates,signalDates,symptomDates,feelingsMap) {
   else if (nextPeriodDay<=3&&!onPeriod) banner='<div class="banner fadein" style="background:var(--blue-lt);border:1px solid #B8D4EE;"><div class="banner-icon">🗓</div><div><div class="banner-title" style="color:var(--blue)">Period arriving soon</div><div class="banner-body" style="color:var(--ink-mid)">Expected in '+nextPeriodDay+' day'+(nextPeriodDay!==1?'s':'')+' around '+nextPeriodStr+'. Stock up on what you need.</div></div></div>';
 
   document.getElementById('app').innerHTML=
-    '<div class="header fadein"><div class="header-inner">'
+    '<div class="header"><div class="header-inner">'
     +'<div class="header-greeting">'+phase.emoji+' <em>'+phase.greeting+'</em></div>'
     +'<div class="phase-pill"><div class="phase-dot"></div>Day '+dayInCycle+' of '+len+' &middot; '+phase.name+' phase</div>'
     +'</div></div>'
 
-    +'<div class="card-strip fadein">'
+    +'<div class="card-strip">'
     +'<div class="stat-card"><div class="stat-label">Cycle day</div><div class="stat-value">'+dayInCycle+'</div><div class="stat-sub">of '+len+' days</div></div>'
     +'<div class="stat-card"><div class="stat-label">Next period</div><div class="stat-value">'+nextPeriodDay+'</div><div class="stat-sub">days &middot; '+nextPeriodStr+'</div></div>'
     +(!onPeriod&&daysToOv>0?'<div class="stat-card"><div class="stat-label">Ovulation in</div><div class="stat-value">'+daysToOv+'</div><div class="stat-sub">days</div></div>':'')
@@ -330,7 +330,7 @@ function render(periodDates,signalDates,symptomDates,feelingsMap) {
 
     +banner
 
-    +'<div class="section fadein"><div class="section-title">How you\'re likely feeling</div>'
+    +'<div class="section"><div class="section-title">How you\'re likely feeling</div>'
     +'<div class="insight-card">'
     +'<div class="insight-header"><div class="insight-icon" style="background:'+phase.bg+';font-size:1.3rem">'+phase.emoji+'</div>'
     +'<div><div class="insight-title">'+phase.name+' phase</div><div class="insight-sub">'+phase.tagline+'</div></div></div>'
@@ -343,7 +343,7 @@ function render(periodDates,signalDates,symptomDates,feelingsMap) {
     +'<div class="insight-body">'+tip+'</div>'
     +'</div></div>'
 
-    +'<div class="section fadein"><div class="section-title">Tonight\'s moon</div>'
+    +'<div class="section"><div class="section-title">Tonight\'s moon</div>'
     +'<div class="insight-card">'
     +'<div class="insight-header"><div class="insight-icon" style="background:#F5F0FF;font-size:1.5rem">'+moon.emoji+'</div>'
     +'<div><div class="insight-title">'+moon.name+'</div><div class="insight-sub">Lunar day '+Math.round(moon.age)+' of 29</div></div></div>'
@@ -352,12 +352,12 @@ function render(periodDates,signalDates,symptomDates,feelingsMap) {
     +moonCycleHtml
     +'</div></div>'
 
-    +'<div class="section fadein"><div class="section-title">Your calendar</div>'
+    +'<div class="section"><div class="section-title">Your calendar</div>'
     +'<div class="cal-wrap"><div id="calContainer">'+buildCalendar(periodDates,signalDates,symptomDates,len,0)+'</div></div></div>'
 
-    +'<button class="log-btn fadein" onclick="openLog()">🩸 Log period start</button>'
-    +'<button class="log-btn fadein" onclick="openSymptom()" style="margin-top:0.75rem;background:linear-gradient(135deg,#5FA67A,#3d8a5e);">📝 Log a symptom</button>'
-    +'<button class="signal-btn fadein" onclick="openSignal()">💜 Send Dan a signal</button>'
+    +'<button class="log-btn" onclick="openLog()">🩸 Log period start</button>'
+    +'<button class="log-btn" onclick="openSymptom()" style="margin-top:0.75rem;background:linear-gradient(135deg,#5FA67A,#3d8a5e);">📝 Log a symptom</button>'
+    +'<button class="signal-btn" onclick="openSignal()">💜 Send Dan a signal</button>'
     +'<div style="padding:1.5rem 1rem 0;font-size:11px;color:var(--ink-lt);text-align:center">Cycle data is private and stored only in a password-protected Google Sheet.</div>';
 }
 
@@ -581,13 +581,14 @@ function playSignalChime() {
 
 async function init() {
   calOffset=0;
+  // Fully reset modal state
   const modal = document.getElementById('modal');
   modal.classList.remove('open');
-  modal.style.display = 'none';
+  modal.removeAttribute('style');
+  // Reset app content
   document.getElementById('app').innerHTML='<div class="loading-wrap"><div class="spinner"></div>Loading your cycle data...</div>';
   const {periodDates,signalDates,symptomDates,feelingsMap}=await fetchData();
   render(periodDates,signalDates,symptomDates,feelingsMap);
-  modal.style.display = '';
 }
 init();
 </script>
