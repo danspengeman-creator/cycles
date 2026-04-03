@@ -292,6 +292,10 @@ function render(periodDates,signalDates,symptomDates,feelingsMap) {
   // Build a map of date -> feelings for day summary
   appState={periodDates,signalDates,symptomDates,feelingsMap:feelingsMap||{},len};
 
+  // Schedule period reminder if 3 days out
+  const nextPeriodDayForNotif = len - rawDaysSince % len;
+  if (nextPeriodDayForNotif <= 3) schedulePeriodReminders(nextPeriodDayForNotif);
+
   // Moon
   const moon=getMoonPhase(today);
   const moonCycle=getMoonCycleType(moon.age,dayInCycle);
@@ -599,9 +603,56 @@ function playSignalChime() {
   } catch(e) {}
 }
 
+
+// ── PUSH NOTIFICATIONS ──
+async function registerServiceWorker() {
+  if (!('serviceWorker' in navigator) || !('Notification' in window)) return;
+  try {
+    await navigator.serviceWorker.register('./sw.js');
+  } catch(e) { console.warn('SW registration failed:', e); }
+}
+
+async function schedulePeriodReminders(daysUntil) {
+  if (!('serviceWorker' in navigator) || !('Notification' in window)) return;
+
+  if (Notification.permission === 'default') {
+    await Notification.requestPermission();
+  }
+  if (Notification.permission !== 'granted') return;
+
+  const reg = await navigator.serviceWorker.ready;
+  if (!reg.active) return;
+
+  // Only schedule once — store the period start date we scheduled for
+  const scheduleKey = 'remindersScheduled';
+  const lastKey = localStorage.getItem(scheduleKey);
+  const thisKey = String(daysUntil); // unique per countdown position
+  if (lastKey === thisKey) return;
+  localStorage.setItem(scheduleKey, thisKey);
+
+  // Build one 8am notification for each remaining day
+  // daysUntil=3 means today is 3 days out, so schedule day 3, 2, 1 and 0
+  const reminders = [];
+  const now = new Date();
+
+  for (let d = daysUntil; d >= 0; d--) {
+    const daysFromNow = daysUntil - d;
+    const fire = new Date(now.getFullYear(), now.getMonth(), now.getDate() + daysFromNow, 8, 0, 0, 0);
+    // Skip if already past 8am today for d===daysUntil
+    if (fire.getTime() > Date.now()) {
+      reminders.push({ fireAt: fire.getTime(), daysUntil: d });
+    }
+  }
+
+  if (reminders.length) {
+    reg.active.postMessage({ type: 'SCHEDULE_PERIOD_REMINDERS', reminders });
+  }
+}
+
 async function init() {
   calOffset=0;
   closeModal();
+  registerServiceWorker();
   document.getElementById('app').innerHTML='<div class="loading-wrap"><div class="spinner"></div>Loading your cycle data...</div>';
   const {periodDates,signalDates,symptomDates,feelingsMap}=await fetchData();
   render(periodDates,signalDates,symptomDates,feelingsMap);
