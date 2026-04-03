@@ -581,10 +581,13 @@ function playSignalChime() {
 
 async function init() {
   calOffset=0;
-  document.getElementById('modal').classList.remove('open');
+  const modal = document.getElementById('modal');
+  modal.classList.remove('open');
+  modal.style.display = 'none';
   document.getElementById('app').innerHTML='<div class="loading-wrap"><div class="spinner"></div>Loading your cycle data...</div>';
   const {periodDates,signalDates,symptomDates,feelingsMap}=await fetchData();
   render(periodDates,signalDates,symptomDates,feelingsMap);
+  modal.style.display = '';
 }
 init();
 </script>
