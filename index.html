@@ -251,8 +251,8 @@ function buildCalendar(periodDates,signalDates,symptomDates,len,offset) {
     const cycleDay=(daysSinceLast%len)+1;
     const ovulationDay=Math.round(len*PHASES[2].maxPct);
     if (cycleDay<=5) return 'period';
-    if (cycleDay===ovulationDay) return 'ovulation';
-    if (cycleDay>=ovulationDay-4&&cycleDay<ovulationDay) return 'fertile';
+    if (cycleDay>=ovulationDay-2&&cycleDay<=ovulationDay) return 'ovulation'; // 3-day ovulation window
+    if (cycleDay>=ovulationDay-5&&cycleDay<ovulationDay-2) return 'fertile';
     const pct=cycleDay/len;
     if (pct<=PHASES[1].maxPct) return 'follicular';
     if (pct<=PHASES[3].maxPct) return 'luteal';
