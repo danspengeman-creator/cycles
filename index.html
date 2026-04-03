@@ -125,7 +125,7 @@
   </div>
 </div>
 <script>
-const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbxq07vqdehTlyhhNSrwBTV0BMavY8rTRNU2DOA0gZTfSv6t15Q4oWFWSVGkEcUz0F_7/exec";
+const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbwUcYIYmPRQi2icfSiNcDRqxuE2ttZeK07FCqWEuZFenXZQX-Vub3lJD08OIY9m2MDi/exec";
 const PERIOD_DATES_FB = ["2025-07-02","2025-07-30","2025-08-23","2025-09-20","2025-10-16","2025-11-10","2025-12-09","2026-01-02","2026-01-28","2026-02-23","2026-03-26"];
 const SIGNAL_DATES_FB = [];
 
@@ -217,8 +217,11 @@ async function fetchData() {
   try {
     const res=await fetch(SCRIPT_URL+'?action=read&t='+Date.now());
     const json=await res.json();
-    return { periodDates:(json.periodDates||[]).sort(), signalDates:(json.signalDates||[]).sort(), symptomDates:(json.symptomDates||[]).sort() };
-  } catch(e) { return { periodDates:[...PERIOD_DATES_FB].sort(), signalDates:[...SIGNAL_DATES_FB].sort(), symptomDates:[] }; }
+    const normSymptom = (json.symptomDates||[]).map(d => { const p=parseISOLocal(d); return p?toISO(p):null; }).filter(Boolean);
+    const feelingsMap = {};
+    if (json.feelingsMap) Object.assign(feelingsMap, json.feelingsMap);
+    return { periodDates:(json.periodDates||[]).sort(), signalDates:(json.signalDates||[]).sort(), symptomDates:normSymptom.sort(), feelingsMap };
+  } catch(e) { return { periodDates:[...PERIOD_DATES_FB].sort(), signalDates:[...SIGNAL_DATES_FB].sort(), symptomDates:[], feelingsMap:{} }; }
 }
 async function writeEntry(action,dateStr) {
   const res=await fetch(SCRIPT_URL+'?action='+action+'&date='+encodeURIComponent(dateStr)+'&t='+Date.now());
@@ -264,8 +267,8 @@ function buildCalendar(periodDates,signalDates,symptomDates,len,offset) {
   for (let i=0;i<firstDow;i++) h+='<div class="cal-day empty"></div>';
   for (let day=1;day<=daysInMonth;day++) {
     const iso=year+'-'+String(month+1).padStart(2,'0')+'-'+String(day).padStart(2,'0');
-    const pc=getDayClass(iso), it=iso===todayISO?' today':'', sg=signalSet.has(iso)?' signal':'';
-    h+='<div class="cal-day'+(pc?' '+pc:'')+it+sg+'" onclick="tapDay(\''+iso+'\')">'+day+'</div>';
+    const pc=getDayClass(iso), it=iso===todayISO?' today':'', sg=signalSet.has(iso)?' signal':'', sy=symptomSet.has(iso)?' symptom':'';
+    h+='<div class="cal-day'+(pc?' '+pc:'')+it+sg+sy+'" onclick="tapDay(\''+iso+'\')">' +day+'</div>';
   }
   h+='</div><div class="cal-legend">'
     +'<span class="leg-chip" onclick="openPhaseInfo(\'period\')"     style="background:#E8D4EE;color:#7B4F8E">🌙 Period</span>'
@@ -283,7 +286,7 @@ function changeMonth(dir) {
   document.getElementById('calContainer').innerHTML=buildCalendar(appState.periodDates,appState.signalDates,appState.symptomDates,appState.len,calOffset);
 }
 
-function render(periodDates,signalDates,symptomDates) {
+function render(periodDates,signalDates,symptomDates,feelingsMap) {
   const today=new Date();
   const len=avgCycleLen(periodDates);
   const lastDate=parseISOLocal(periodDates[periodDates.length-1]);
@@ -295,7 +298,8 @@ function render(periodDates,signalDates,symptomDates) {
   const nextPeriodDay=len-rawDaysSince%len;
   const nextPeriodStr=new Date(today.getTime()+nextPeriodDay*86400000).toLocaleDateString('en-US',{month:'short',day:'numeric'});
   const daysToOv=(len-14)-dayInCycle;
-  appState={periodDates,signalDates,symptomDates,len};
+  // Build a map of date -> feelings for day summary
+  appState={periodDates,signalDates,symptomDates,feelingsMap:feelingsMap||{},len};
 
   // Moon
   const moon=getMoonPhase(today);
@@ -357,7 +361,57 @@ function render(periodDates,signalDates,symptomDates) {
     +'<div style="padding:1.5rem 1rem 0;font-size:11px;color:var(--ink-lt);text-align:center">Cycle data is private and stored only in a password-protected Google Sheet.</div>';
 }
 
-function tapDay(iso) { openLogForDate(iso); }
+function tapDay(iso) {
+  const d = parseISOLocal(iso);
+  const dateStr = d.toLocaleDateString('en-US', { weekday:'long', month:'long', day:'numeric' });
+  const { periodDates, signalDates, symptomDates, len } = appState;
+
+  // Work out phase for this day
+  const lastDate = parseISOLocal(periodDates[periodDates.length-1]);
+  const daysSince = Math.floor((d - lastDate) / 86400000);
+  const cycleDay = (((daysSince % len) + len) % len) + 1;
+  const phase = getPhase(cycleDay, len);
+
+  const hasSignal  = signalDates.includes(iso);
+  const hasSymptom = symptomDates.includes(iso);
+  const isToday    = iso === toISO(new Date());
+  const isFuture   = d > new Date();
+
+  document.getElementById('modal-title').textContent = dateStr;
+  document.getElementById('modal-sub').textContent = phase.emoji + ' Day ' + cycleDay + ' of ' + len + ' — ' + phase.name;
+  document.getElementById('modal-msg').textContent = '';
+  document.getElementById('modal-msg').className = 'modal-msg';
+
+  let body = '';
+
+  // Phase summary
+  body += '<div style="background:' + phase.bg + ';border-radius:12px;padding:0.85rem 1rem;margin-bottom:10px">'
+    + '<div style="font-size:13px;color:' + phase.color + ';line-height:1.5">' + phase.body + '</div></div>';
+
+  // Signal indicator
+  if (hasSignal) {
+    body += '<div style="background:#F0E8F8;border-radius:12px;padding:0.75rem 1rem;margin-bottom:10px;font-size:13px;color:var(--plum)">💜 Signal sent to Dan on this day.</div>';
+  }
+
+  // Symptom indicator — feelings pulled from sheet via appState.feelingsMap
+  if (hasSymptom) {
+    const feelings = (appState.feelingsMap && appState.feelingsMap[iso]) || '';
+    body += '<div style="background:#EEF8F3;border-radius:12px;padding:0.75rem 1rem;margin-bottom:10px;font-size:13px;color:var(--sage)">'
+      + '📝 Feelings logged' + (feelings ? ': <strong>' + feelings + '</strong>' : '') + '</div>';
+  }
+
+  // Actions
+  body += '<div style="display:flex;flex-direction:column;gap:8px;margin-top:4px">';
+  if (!isFuture) {
+    body += '<button class="mbtn primary" onclick="closeModal();openLogForDate(\'' + iso + '\')">🩸 Log period start on this day</button>';
+    body += '<button class="mbtn" onclick="closeModal();openSymptomForDate(\'' + iso + '\')" style="background:linear-gradient(135deg,#5FA67A,#3d8a5e);color:#fff">📝 Log feelings for this day</button>';
+  }
+  body += '<button class="mbtn cancel" onclick="closeModal()">Close</button>';
+  body += '</div>';
+
+  document.getElementById('modal-btns').innerHTML = body;
+  document.getElementById('modal').classList.add('open');
+}
 function openLog()   { openLogForDate(toISO(new Date())); }
 
 function openLogForDate(iso) {
@@ -431,8 +485,9 @@ const FEELINGS = [
   { emoji:'🤢', label:'Nauseous'       }
 ];
 
-function openSymptom() {
-  const iso = toISO(new Date());
+function openSymptomForDate(iso) { openSymptom(iso); }
+function openSymptom(isoOverride) {
+  const iso = isoOverride || toISO(new Date());
   let selected = new Set();
 
   function render() {
@@ -526,8 +581,8 @@ function playSignalChime() {
 
 async function init() {
   calOffset=0;
-  const {periodDates,signalDates,symptomDates}=await fetchData();
-  render(periodDates,signalDates,symptomDates);
+  const {periodDates,signalDates,symptomDates,feelingsMap}=await fetchData();
+  render(periodDates,signalDates,symptomDates,feelingsMap);
 }
 init();
 </script>
