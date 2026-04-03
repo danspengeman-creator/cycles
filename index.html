@@ -24,1292 +24,440 @@
     --card-bg:  #FFFFFF;
     --border:   #EDE8F2;
   }
-
   * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
-
-  body {
-    font-family: 'DM Sans', sans-serif;
-    background: var(--mist);
-    color: var(--ink);
-    min-height: 100vh;
-    padding-bottom: 3rem;
-    font-size: 16px;
+  body { font-family: 'DM Sans', sans-serif; background: var(--mist); color: var(--ink); min-height: 100vh; padding-bottom: 3rem; font-size: 16px; }
+  @keyframes hueRotate  { 0%{opacity:1}  33%{opacity:0.4} 66%{opacity:0.8} 100%{opacity:1}   }
+  @keyframes hueRotate2 { 0%{opacity:0.3} 50%{opacity:1}  100%{opacity:0.3} }
+  .header { background:#7B4F8E; padding:2.5rem 1.5rem 3.5rem; position:relative; overflow:hidden; }
+  .header::before { content:''; position:absolute; inset:0; background:linear-gradient(160deg,#9B5FA0 0%,#E8678A 100%); animation:hueRotate 6s ease-in-out infinite; z-index:0; }
+  .header::after  { content:''; position:absolute; inset:0; background:linear-gradient(200deg,#C45E8A 0%,#7B4F8E 60%,#E8678A 100%); animation:hueRotate2 6s ease-in-out infinite; z-index:0; }
+  .header-inner   { position:relative; z-index:2; }
+  .app-name { display:none; }
+  .header-greeting { font-family:'DM Serif Display',serif; font-size:1.95rem; color:#fff; line-height:1.2; margin-bottom:1.25rem; }
+  .header-greeting em { font-style:italic; }
+  .phase-pill { display:inline-flex; align-items:center; gap:6px; background:rgba(255,255,255,0.2); backdrop-filter:blur(8px); border:1px solid rgba(255,255,255,0.3); border-radius:100px; padding:6px 14px; font-size:14px; font-weight:500; color:#fff; }
+  .phase-dot  { width:8px; height:8px; border-radius:50%; background:#fff; animation:pulseDot 2s ease-in-out infinite; }
+  @keyframes pulseDot { 0%,100%{opacity:1;transform:scale(1)} 50%{opacity:0.5;transform:scale(0.75)} }
+  .card-strip { display:grid; grid-template-columns:repeat(auto-fit,minmax(90px,1fr)); gap:8px; padding:0 1rem; margin-top:-1.5rem; position:relative; z-index:10; }
+  .stat-card  { background:var(--card-bg); border-radius:16px; padding:12px; box-shadow:0 2px 16px rgba(44,32,53,0.08); border:1px solid var(--border); }
+  .stat-label { font-size:11px; font-weight:500; text-transform:uppercase; letter-spacing:0.06em; color:var(--ink-lt); margin-bottom:4px; }
+  .stat-value { font-family:'DM Serif Display',serif; font-size:1.5rem; color:var(--ink); line-height:1; }
+  .stat-sub   { font-size:12px; color:var(--ink-lt); margin-top:2px; }
+  .section       { padding:1.5rem 1rem 0; }
+  .section-title { font-family:'DM Serif Display',serif; font-size:1.1rem; color:var(--ink); margin-bottom:0.75rem; }
+  .insight-card   { background:var(--card-bg); border-radius:18px; padding:1.25rem; box-shadow:0 2px 16px rgba(44,32,53,0.07); border:1px solid var(--border); margin-bottom:0.75rem; }
+  .insight-header { display:flex; align-items:center; gap:10px; margin-bottom:0.75rem; }
+  .insight-icon   { width:40px; height:40px; border-radius:12px; display:flex; align-items:center; justify-content:center; font-size:1.2rem; flex-shrink:0; }
+  .insight-title  { font-weight:500; font-size:15px; color:var(--ink); }
+  .insight-sub    { font-size:12px; color:var(--ink-lt); margin-top:1px; }
+  .insight-body   { font-size:15px; color:var(--ink-mid); line-height:1.55; }
+  .chips { display:flex; flex-wrap:wrap; gap:7px; margin-top:0.75rem; }
+  .chip  { background:var(--mist); border:1px solid var(--border); border-radius:100px; padding:5px 12px; font-size:13px; color:var(--ink-mid); }
+  .banner      { margin:1.5rem 1rem 0; border-radius:16px; padding:1rem 1.25rem; display:flex; align-items:flex-start; gap:12px; }
+  .banner-icon { font-size:1.4rem; flex-shrink:0; margin-top:1px; }
+  .banner-title{ font-weight:600; font-size:14px; margin-bottom:3px; }
+  .banner-body { font-size:13px; line-height:1.45; }
+  .cal-wrap  { background:var(--card-bg); border-radius:18px; padding:1rem; box-shadow:0 2px 16px rgba(44,32,53,0.07); border:1px solid var(--border); }
+  .cal-nav   { display:flex; align-items:center; justify-content:space-between; margin-bottom:0.75rem; }
+  .cal-nav-btn { background:none; border:1px solid var(--border); border-radius:8px; width:32px; height:32px; cursor:pointer; font-size:16px; color:var(--ink-mid); display:flex; align-items:center; justify-content:center; }
+  .cal-month { font-family:'DM Serif Display',serif; font-size:1rem; color:var(--ink); }
+  .cal-grid  { display:grid; grid-template-columns:repeat(7,1fr); gap:3px; }
+  .cal-dow   { font-size:10px; font-weight:600; text-align:center; color:var(--ink-lt); text-transform:uppercase; letter-spacing:0.04em; padding:4px 0; }
+  .cal-day   { aspect-ratio:1; display:flex; align-items:center; justify-content:center; border-radius:10px; font-size:13px; cursor:pointer; transition:opacity 0.1s; position:relative; color:var(--ink); }
+  .cal-day:active { opacity:0.6; }
+  .cal-day.empty  { pointer-events:none; }
+  .cal-day.today  { border:2px solid var(--rose); font-weight:600; }
+  .cal-day.period     { background:#E8D4EE; color:var(--plum); }
+  .cal-day.follicular { background:#EEF3F8; color:#7A99B8; }
+  .cal-day.fertile    { background:#FDEAE0; color:var(--amber); }
+  .cal-day.ovulation  { background:var(--rose-lt); color:var(--rose); font-weight:600; }
+  .cal-day.luteal     { background:var(--sage-lt); color:var(--sage); }
+  .cal-day.pms        { background:var(--blue-lt); color:var(--blue); }
+  .cal-day.signal::after { content:'💜'; font-size:9px; position:absolute; bottom:2px; right:2px; }
+  .cal-legend { display:flex; flex-wrap:wrap; gap:7px; margin-top:0.85rem; justify-content:center; }
+  .leg-chip   { font-size:12px; font-weight:500; padding:5px 11px; border-radius:100px; cursor:pointer; transition:transform 0.1s,opacity 0.1s; user-select:none; }
+  .leg-chip:active { transform:scale(0.94); opacity:0.8; }
+  .log-btn    { display:block; width:calc(100% - 2rem); margin:1.25rem 1rem 0; padding:1rem; background:linear-gradient(135deg,var(--plum),var(--rose)); color:#fff; border:none; border-radius:16px; font-family:'DM Sans',sans-serif; font-size:16px; font-weight:500; cursor:pointer; box-shadow:0 4px 20px rgba(232,103,138,0.35); transition:transform 0.15s,box-shadow 0.15s; }
+  .log-btn:active { transform:scale(0.97); box-shadow:0 2px 10px rgba(232,103,138,0.25); }
+  .signal-btn { display:block; width:calc(100% - 2rem); margin:0.75rem 1rem 0; padding:1rem; background:var(--card-bg); color:var(--plum); border:1.5px solid var(--rose-lt); border-radius:16px; font-family:'DM Sans',sans-serif; font-size:15px; font-weight:500; cursor:pointer; transition:all 0.15s; box-shadow:0 2px 8px rgba(44,32,53,0.05); }
+  .signal-btn:active { background:#FBF0F4; transform:scale(0.97); }
+  .modal-overlay { display:none; position:fixed; inset:0; background:rgba(44,32,53,0.45); z-index:100; backdrop-filter:blur(3px); align-items:flex-end; }
+  .modal-overlay.open { display:flex; }
+  .modal { background:var(--card-bg); border-radius:24px 24px 0 0; padding:1.5rem 1.5rem 2.5rem; width:100%; animation:slideUp 0.3s cubic-bezier(0.34,1.26,0.64,1); max-height:85vh; overflow-y:auto; }
+  @keyframes slideUp { from{transform:translateY(60px);opacity:0} to{transform:translateY(0);opacity:1} }
+  .modal-handle { width:36px; height:4px; background:var(--border); border-radius:2px; margin:0 auto 1.25rem; }
+  .modal-title { font-family:'DM Serif Display',serif; font-size:1.2rem; margin-bottom:0.25rem; }
+  .modal-sub   { font-size:13px; color:var(--ink-lt); margin-bottom:1.25rem; }
+  .modal-btns  { display:flex; flex-direction:column; gap:10px; }
+  .mbtn        { padding:14px; border-radius:14px; border:none; font-family:'DM Sans',sans-serif; font-size:15px; font-weight:500; cursor:pointer; width:100%; transition:opacity 0.15s; }
+  .mbtn:active { opacity:0.7; }
+  .mbtn.primary{ background:linear-gradient(135deg,var(--plum),var(--rose)); color:#fff; }
+  .mbtn.cancel { background:var(--mist); color:var(--ink-mid); border:1px solid var(--border); font-weight:400; }
+  .modal-msg   { font-size:13px; color:var(--ink-lt); text-align:center; padding:0.5rem 0; }
+  .modal-msg.ok  { color:var(--sage); }
+  .modal-msg.err { color:var(--rose); }
+  .loading-wrap { padding:3rem 1.5rem; text-align:center; color:var(--ink-lt); font-size:14px; }
+  .spinner { width:36px; height:36px; border-radius:50%; border:3px solid var(--border); border-top-color:var(--rose); animation:spin 0.8s linear infinite; margin:0 auto 1rem; }
+  @keyframes spin { to{transform:rotate(360deg)} }
+  @media (min-width:640px) {
+    body { background:#EDE8F4; }
+    .header { border-radius:0 0 24px 24px; }
+    .desktop-shell { max-width:540px; margin:0 auto; background:var(--mist); min-height:100vh; box-shadow:0 0 60px rgba(44,32,53,0.15); }
   }
-
-  /* ── HEADER ── */
-  @keyframes hueRotate {
-    0%   { opacity: 1; }
-    33%  { opacity: 0.4; }
-    66%  { opacity: 0.8; }
-    100% { opacity: 1; }
-  }
-  @keyframes hueRotate2 {
-    0%   { opacity: 0.3; }
-    50%  { opacity: 1; }
-    100% { opacity: 0.3; }
-  }
-  .header {
-    background: #7B4F8E;
-    padding: 2.5rem 1.5rem 3.5rem;
-    position: relative;
-    overflow: hidden;
-  }
-  .header::before {
-    content: '';
-    position: absolute;
-    inset: 0;
-    background: linear-gradient(160deg, #9B5FA0 0%, #E8678A 100%);
-    animation: hueRotate 6s ease-in-out infinite;
-    z-index: 0;
-  }
-  .header::after {
-    content: '';
-    position: absolute;
-    inset: 0;
-    background: linear-gradient(200deg, #C45E8A 0%, #7B4F8E 60%, #E8678A 100%);
-    animation: hueRotate2 6s ease-in-out infinite;
-    z-index: 0;
-  }
-
-  .header-inner { position: relative; z-index: 2; }
-  .app-name { display: none; }
-  .header-greeting {
-    font-family: 'DM Serif Display', serif;
-    font-size: 1.95rem;
-    color: #fff;
-    line-height: 1.2;
-    margin-bottom: 1.25rem;
-  }
-  .header-greeting em { font-style: italic; }
-
-  /* Phase pill */
-  .phase-pill {
-    display: inline-flex;
-    align-items: center;
-    gap: 6px;
-    background: rgba(255,255,255,0.2);
-    backdrop-filter: blur(8px);
-    border: 1px solid rgba(255,255,255,0.3);
-    border-radius: 100px;
-    padding: 6px 14px;
-    font-size: 14px;
-    font-weight: 500;
-    color: #fff;
-  }
-  .phase-dot {
-    width: 8px; height: 8px;
-    border-radius: 50%;
-    background: #fff;
-    animation: pulseDot 2s ease-in-out infinite;
-  }
-  @keyframes pulseDot {
-    0%,100%{opacity:1;transform:scale(1)}
-    50%{opacity:0.5;transform:scale(0.75)}
-  }
-
-  /* ── MAIN CARD STRIP ── */
-  .card-strip {
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(90px, 1fr));
-    gap: 8px;
-    padding: 0 1rem;
-    margin-top: -1.5rem;
-    position: relative;
-    z-index: 10;
-  }
-
-  .stat-card {
-    background: var(--card-bg);
-    border-radius: 16px;
-    padding: 12px 12px;
-    box-shadow: 0 2px 16px rgba(44,32,53,0.08);
-    border: 1px solid var(--border);
-  }
-  .stat-label {
-    font-size: 11px;
-    font-weight: 500;
-    text-transform: uppercase;
-    letter-spacing: 0.06em;
-    color: var(--ink-lt);
-    margin-bottom: 4px;
-  }
-  .stat-value {
-    font-family: 'DM Serif Display', serif;
-    font-size: 1.5rem;
-    color: var(--ink);
-    line-height: 1;
-  }
-  .stat-sub {
-    font-size: 12px;
-    color: var(--ink-lt);
-    margin-top: 2px;
-  }
-
-  /* ── SECTION ── */
-  .section { padding: 1.5rem 1rem 0; }
-  .section-title {
-    font-family: 'DM Serif Display', serif;
-    font-size: 1.1rem;
-    color: var(--ink);
-    margin-bottom: 0.75rem;
-  }
-
-  /* ── INSIGHT CARD ── */
-  .insight-card {
-    background: var(--card-bg);
-    border-radius: 18px;
-    padding: 1.25rem;
-    box-shadow: 0 2px 16px rgba(44,32,53,0.07);
-    border: 1px solid var(--border);
-    margin-bottom: 0.75rem;
-  }
-  .insight-header {
-    display: flex;
-    align-items: center;
-    gap: 10px;
-    margin-bottom: 0.75rem;
-  }
-  .insight-icon {
-    width: 40px; height: 40px;
-    border-radius: 12px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    font-size: 1.2rem;
-    flex-shrink: 0;
-  }
-  .insight-title {
-    font-weight: 500;
-    font-size: 15px;
-    color: var(--ink);
-  }
-  .insight-sub {
-    font-size: 12px;
-    color: var(--ink-lt);
-    margin-top: 1px;
-  }
-  .insight-body {
-    font-size: 15px;
-    color: var(--ink-mid);
-    line-height: 1.55;
-  }
-
-  /* ── SYMPTOM CHIPS ── */
-  .chips {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 7px;
-    margin-top: 0.75rem;
-  }
-  .chip {
-    background: var(--mist);
-    border: 1px solid var(--border);
-    border-radius: 100px;
-    padding: 5px 12px;
-    font-size: 13px;
-    color: var(--ink-mid);
-    font-weight: 400;
-  }
-
-  /* ── BANNER ── */
-  .banner {
-    margin: 1.5rem 1rem 0;
-    border-radius: 16px;
-    padding: 1rem 1.25rem;
-    display: flex;
-    align-items: flex-start;
-    gap: 12px;
-  }
-  .banner-icon { font-size: 1.4rem; flex-shrink: 0; margin-top: 1px; }
-  .banner-title { font-weight: 600; font-size: 14px; margin-bottom: 3px; }
-  .banner-body { font-size: 13px; line-height: 1.45; }
-
-  /* ── CALENDAR ── */
-  .cal-wrap {
-    background: var(--card-bg);
-    border-radius: 18px;
-    padding: 1rem;
-    box-shadow: 0 2px 16px rgba(44,32,53,0.07);
-    border: 1px solid var(--border);
-  }
-  .cal-nav {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    margin-bottom: 0.75rem;
-  }
-  .cal-nav-btn {
-    background: none;
-    border: 1px solid var(--border);
-    border-radius: 8px;
-    width: 32px; height: 32px;
-    cursor: pointer;
-    font-size: 16px;
-    color: var(--ink-mid);
-    display: flex;
-    align-items: center;
-    justify-content: center;
-  }
-  .cal-month {
-    font-family: 'DM Serif Display', serif;
-    font-size: 1rem;
-    color: var(--ink);
-  }
-  .cal-grid {
-    display: grid;
-    grid-template-columns: repeat(7, 1fr);
-    gap: 3px;
-  }
-  .cal-dow {
-    font-size: 10px;
-    font-weight: 600;
-    text-align: center;
-    color: var(--ink-lt);
-    text-transform: uppercase;
-    letter-spacing: 0.04em;
-    padding: 4px 0;
-  }
-  .cal-day {
-    aspect-ratio: 1;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    border-radius: 10px;
-    font-size: 13px;
-    cursor: pointer;
-    transition: opacity 0.1s;
-    position: relative;
-    color: var(--ink);
-  }
-  .cal-day:active { opacity: 0.6; }
-  .cal-day.empty { pointer-events: none; }
-  .cal-day.today {
-    border: 2px solid var(--rose);
-    font-weight: 600;
-  }
-  .cal-day.period    { background: #E8D4EE; color: var(--plum); }
-  .cal-day.follicular { background: #EEF3F8; color: #7A99B8; }
-  .cal-day.ovulation { background: var(--rose-lt); color: var(--rose); font-weight: 600; }
-  .cal-day.fertile   { background: #FDEAE0; color: var(--amber); }
-  .cal-day.luteal    { background: var(--sage-lt); color: var(--sage); }
-  .cal-day.pms       { background: var(--blue-lt); color: var(--blue); }
-  .cal-day.signal    { background: #E8F8EE; }
-  .cal-day.signal::after {
-    content: '💜';
-    font-size: 9px;
-    position: absolute;
-    bottom: 2px; right: 2px;
-  }
-
-  .cal-legend {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 7px;
-    margin-top: 0.85rem;
-    justify-content: center;
-  }
-  .leg-chip {
-    font-size: 12px;
-    font-weight: 500;
-    padding: 5px 11px;
-    border-radius: 100px;
-    cursor: pointer;
-    transition: transform 0.1s, opacity 0.1s;
-    user-select: none;
-  }
-  .leg-chip:active { transform: scale(0.94); opacity: 0.8; }
-
-  /* ── LOG BUTTON ── */
-  .log-btn {
-    display: block;
-    width: calc(100% - 2rem);
-    margin: 1.25rem 1rem 0;
-    padding: 1rem;
-    background: linear-gradient(135deg, var(--plum), var(--rose));
-    color: #fff;
-    border: none;
-    border-radius: 16px;
-    font-family: 'DM Sans', sans-serif;
-    font-size: 16px;
-    font-weight: 500;
-    cursor: pointer;
-    box-shadow: 0 4px 20px rgba(232,103,138,0.35);
-    transition: transform 0.15s, box-shadow 0.15s;
-  }
-  .log-btn:active {
-    transform: scale(0.97);
-    box-shadow: 0 2px 10px rgba(232,103,138,0.25);
-  }
-
-  /* Signal button */
-  .signal-btn {
-    display: block;
-    width: calc(100% - 2rem);
-    margin: 0.75rem 1rem 0;
-    padding: 1rem;
-    background: var(--card-bg);
-    color: var(--plum);
-    border: 1.5px solid var(--rose-lt);
-    border-radius: 16px;
-    font-family: 'DM Sans', sans-serif;
-    font-size: 15px;
-    font-weight: 500;
-    cursor: pointer;
-    transition: all 0.15s;
-    box-shadow: 0 2px 8px rgba(44,32,53,0.05);
-  }
-  .signal-btn:active {
-    background: #FBF0F4;
-    transform: scale(0.97);
-  }
-
-  /* ── MODAL ── */
-  .modal-overlay {
-    display: none;
-    position: fixed;
-    inset: 0;
-    background: rgba(44,32,53,0.45);
-    z-index: 100;
-    backdrop-filter: blur(3px);
-    align-items: flex-end;
-  }
-  .modal-overlay.open { display: flex; }
-  .modal {
-    background: var(--card-bg);
-    border-radius: 24px 24px 0 0;
-    padding: 1.5rem 1.5rem 2.5rem;
-    width: 100%;
-    animation: slideUp 0.3s cubic-bezier(0.34,1.26,0.64,1);
-  }
-  @keyframes slideUp {
-    from { transform: translateY(60px); opacity: 0; }
-    to   { transform: translateY(0);    opacity: 1; }
-  }
-  .modal-handle {
-    width: 36px; height: 4px;
-    background: var(--border);
-    border-radius: 2px;
-    margin: 0 auto 1.25rem;
-  }
-  .modal-title {
-    font-family: 'DM Serif Display', serif;
-    font-size: 1.2rem;
-    margin-bottom: 0.25rem;
-  }
-  .modal-sub { font-size: 13px; color: var(--ink-lt); margin-bottom: 1.25rem; }
-  .modal-btns { display: flex; flex-direction: column; gap: 10px; }
-  .mbtn {
-    padding: 14px;
-    border-radius: 14px;
-    border: none;
-    font-family: 'DM Sans', sans-serif;
-    font-size: 15px;
-    font-weight: 500;
-    cursor: pointer;
-    width: 100%;
-    transition: opacity 0.15s;
-  }
-  .mbtn:active { opacity: 0.7; }
-  .mbtn.primary { background: linear-gradient(135deg, var(--plum), var(--rose)); color: #fff; }
-  .mbtn.cancel { background: var(--mist); color: var(--ink-mid); border: 1px solid var(--border); font-weight: 400; }
-  .modal-msg { font-size: 13px; color: var(--ink-lt); text-align: center; padding: 0.5rem 0; }
-  .modal-msg.ok { color: var(--sage); }
-  .modal-msg.err { color: var(--rose); }
-
-  /* ── LOADING ── */
-  .loading-wrap {
-    padding: 3rem 1.5rem;
-    text-align: center;
-    color: var(--ink-lt);
-    font-size: 14px;
-  }
-  .spinner {
-    width: 36px; height: 36px;
-    border-radius: 50%;
-    border: 3px solid var(--border);
-    border-top-color: var(--rose);
-    animation: spin 0.8s linear infinite;
-    margin: 0 auto 1rem;
-  }
-  @keyframes spin { to { transform: rotate(360deg); } }
-
-  /* ── DESKTOP ── */
-  @media (min-width: 640px) {
-    body { background: #EDE8F4; }
-    .header { border-radius: 0 0 24px 24px; }
-    .desktop-shell {
-      max-width: 540px;
-      margin: 0 auto;
-      background: var(--mist);
-      min-height: 100vh;
-      box-shadow: 0 0 60px rgba(44,32,53,0.15);
-    }
-  }
-
-  .fadein { animation: fadeUp 0.4s ease both; }
-  @keyframes fadeUp {
-    from { opacity:0; transform:translateY(8px); }
-    to   { opacity:1; transform:translateY(0); }
-  }
+  .fadein { animation:fadeUp 0.4s ease both; }
+  @keyframes fadeUp { from{opacity:0;transform:translateY(8px)} to{opacity:1;transform:translateY(0)} }
 </style>
 </head>
 <body>
 <div class="desktop-shell">
 <div id="app">
-  <div class="loading-wrap">
-    <div class="spinner"></div>
-    Loading your cycle data...
-  </div>
+  <div class="loading-wrap"><div class="spinner"></div>Loading your cycle data...</div>
 </div>
 </div>
-
-<!-- Modal -->
 <div class="modal-overlay" id="modal" onclick="closeModal(event)">
   <div class="modal">
     <div class="modal-handle"></div>
     <div class="modal-title" id="modal-title">Log period</div>
-    <div class="modal-sub" id="modal-sub">Confirm today as your period start date.</div>
+    <div class="modal-sub"  id="modal-sub"></div>
     <div class="modal-btns" id="modal-btns"></div>
-    <div class="modal-msg" id="modal-msg"></div>
+    <div class="modal-msg"  id="modal-msg"></div>
   </div>
 </div>
-
 <script>
-// ── CONFIG ── Replace these with your deployed Google Apps Script URL
 const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbxzxxXNSmopUIuW1SqGwXam__FqZGSPdVV5HhwCK9YALbdnfy3qdMnWz7UmW4VbdFA/exec";
-
-// Fallback data (keep updated)
-const PERIOD_DATES_FB = [
-  "2025-07-02","2025-07-30","2025-08-23","2025-09-20",
-  "2025-10-16","2025-11-10","2025-12-09","2026-01-02",
-  "2026-01-28","2026-02-23","2026-03-26"
-];
+const PERIOD_DATES_FB = ["2025-07-02","2025-07-30","2025-08-23","2025-09-20","2025-10-16","2025-11-10","2025-12-09","2026-01-02","2026-01-28","2026-02-23","2026-03-26"];
 const SIGNAL_DATES_FB = [];
 
-// ── PHASE DEFINITIONS ──
 const PHASES = [
-  {
-    name: "Menstrual",
-    emoji: "🌙",
-    color: "#7B4F8E",
-    bg: "#F0E6F7",
-    maxPct: 0.18,
-    greeting: "Take it easy, Michelle",
-    tagline: "Your body deserves rest and care right now.",
-    body: "This is your period phase. Hormone levels are at their lowest — it's completely normal to feel low-energy, a bit emotional or craving solitude. Honor what your body needs.",
-    symptoms: ["Cramping", "Fatigue", "Bloating", "Mood dips", "Lower back ache"],
-    tips: [
-      "Warm compresses and heating pads can ease cramps.",
-      "Gentle movement like stretching or a slow walk may help more than rest.",
-      "Cravings for comfort food are normal — enjoy them without guilt.",
-      "Stay hydrated and give yourself permission to slow down."
-    ]
-  },
-  {
-    name: "Follicular",
-    emoji: "🌸",
-    color: "#5FA67A",
-    bg: "#EBF6F1",
-    maxPct: 0.46,
-    greeting: "Energy is returning, Michelle",
-    tagline: "Your mood and motivation are on the rise.",
-    body: "Estrogen is climbing and you're likely feeling more upbeat, social and creative. This is a great time to tackle projects, plan things you enjoy and say yes to new experiences.",
-    symptoms: ["Rising energy", "Better focus", "Sociable mood", "Increased appetite", "Clearer skin"],
-    tips: [
-      "Great time to try something new — your brain is primed for novelty.",
-      "Your social battery is fuller right now so lean into connection.",
-      "Physical activity feels easier and more rewarding in this phase.",
-      "Make the most of the mental clarity — plan, create and organize.",
-      "Your mood and energy are climbing. This is a great time to lean into closeness with Dan — you're likely feeling more open and receptive than usual.",
-      "You're in a naturally warm and connected phase. A spontaneous evening together could feel especially good right now.",
-      "Desire tends to rise alongside your energy this week. It's a great time to be intentional about quality time with Dan.",
-      "Your emotional openness is at a high point — intimacy, both physical and emotional, tends to feel more natural and rewarding now.",
-      "This phase often brings a quiet but real uptick in desire. If the mood strikes, go with it — your body is primed for connection."
-    ]
-  },
-  {
-    name: "Ovulation",
-    emoji: "✨",
-    color: "#E8678A",
-    bg: "#FEF0F4",
-    maxPct: 0.57,
-    greeting: "You're glowing, Michelle",
-    tagline: "Peak energy, confidence and connection.",
-    body: "Estrogen and testosterone are surging — you're likely feeling your most confident, outgoing and magnetic right now. Your energy, libido and communication are all at their peak.",
-    symptoms: ["High energy", "Confidence boost", "Mild pelvic twinge", "Clear discharge", "Heightened senses"],
-    tips: [
-      "Your communication skills are sharpest now — have important conversations.",
-      "This is your most fertile window if that's relevant for you.",
-      "Your body is doing remarkable things — celebrate it.",
-      "This is your peak window — energy, confidence and desire are all elevated. A spontaneous date night or some extra closeness tonight could be especially rewarding.",
-      "Desire is at its highest point right now. If you've been wanting to connect with Dan, this is the time — your body is fully on board.",
-      "You're at your most magnetic this week. Lean into that energy and let Dan know if you're feeling it.",
-      "This is the phase where intimacy tends to feel the most natural and the most satisfying. Make the most of it.",
-      "Your libido peaks during ovulation — it's completely normal to feel a stronger pull toward closeness and physical connection right now.",
-      "Everything is aligned this week. If the spark is there, don't overthink it — your body is giving you a green light."
-    ]
-  },
-  {
-    name: "Luteal",
-    emoji: "🍂",
-    color: "#D4845A",
-    bg: "#FDF3EC",
-    maxPct: 0.86,
-    greeting: "Winding down, Michelle",
-    tagline: "A slower, more inward phase is starting.",
-    body: "Progesterone rises in this phase, bringing a calmer, more introspective mood. Energy gradually decreases and you may crave comfort, routine and cozy evenings at home.",
-    symptoms: ["Bloating", "Tender breasts", "Food cravings", "Fatigue", "Mood fluctuations"],
-    tips: [
-      "Reduce caffeine and alcohol to help manage PMS symptoms later.",
-      "Your body craves warmth and nourishment — soups, cozy nights in.",
-      "Journaling and solo time are especially restorative right now.",
-      "Don't overschedule — protect your energy and rest when you can."
-    ]
-  },
-  {
-    name: "Late Luteal",
-    emoji: "🌧",
-    color: "#5B8DB8",
-    bg: "#EBF3FA",
-    maxPct: 1.00,
-    greeting: "Almost there, Michelle",
-    tagline: "PMS territory — be extra gentle with yourself.",
-    body: "Hormone levels are dropping ahead of your period. It's common to feel more sensitive, irritable or low. Your body is doing a lot of internal work right now — this phase passes soon.",
-    symptoms: ["Irritability", "Anxiety", "Bloating", "Breakouts", "Sleep disruption"],
-    tips: [
-      "Magnesium can help ease PMS symptoms — leafy greens and dark chocolate.",
-      "Low-intensity movement like yoga or walking may lift your mood.",
-      "Extra sleep and avoiding overstimulation can make a real difference.",
-      "Be patient with yourself — these feelings are temporary and real."
-    ]
-  }
+  { name:"Menstrual",  emoji:"🌙", color:"#7B4F8E", bg:"#F0E6F7", maxPct:0.18,
+    greeting:"Take it easy, Michelle", tagline:"Your body deserves rest and care right now.",
+    body:"This is your period phase. Hormone levels are at their lowest — it's completely normal to feel low-energy, a bit emotional or craving solitude. Honor what your body needs.",
+    symptoms:["Cramping","Fatigue","Bloating","Mood dips","Lower back ache"],
+    tips:["Warm compresses and heating pads can ease cramps.","Gentle movement like stretching or a slow walk may help more than rest.","Cravings for comfort food are normal — enjoy them without guilt.","Stay hydrated and give yourself permission to slow down."] },
+  { name:"Follicular", emoji:"🌸", color:"#5FA67A", bg:"#EBF6F1", maxPct:0.46,
+    greeting:"Energy is returning, Michelle", tagline:"Your mood and motivation are on the rise.",
+    body:"Estrogen is climbing and you're likely feeling more upbeat, social and creative. This is a great time to tackle projects, plan things you enjoy and say yes to new experiences.",
+    symptoms:["Rising energy","Better focus","Sociable mood","Increased appetite","Clearer skin"],
+    tips:["Great time to try something new — your brain is primed for novelty.","Your social battery is fuller right now so lean into connection.","Physical activity feels easier and more rewarding in this phase.","Make the most of the mental clarity — plan, create and organize.","Your mood and energy are climbing. This is a great time to lean into closeness with Dan — you're likely feeling more open and receptive than usual.","You're in a naturally warm and connected phase. A spontaneous evening together could feel especially good right now.","Desire tends to rise alongside your energy this week. It's a great time to be intentional about quality time with Dan.","Your emotional openness is at a high point — intimacy, both physical and emotional, tends to feel more natural and rewarding now.","This phase often brings a quiet but real uptick in desire. If the mood strikes, go with it — your body is primed for connection."] },
+  { name:"Ovulation",  emoji:"✨", color:"#E8678A", bg:"#FEF0F4", maxPct:0.57,
+    greeting:"You're glowing, Michelle", tagline:"Peak energy, confidence and connection.",
+    body:"Estrogen and testosterone are surging — you're likely feeling your most confident, outgoing and magnetic right now. Your energy, libido and communication are all at their peak.",
+    symptoms:["High energy","Confidence boost","Mild pelvic twinge","Clear discharge","Heightened senses"],
+    tips:["Your communication skills are sharpest now — have important conversations.","This is your most fertile window if that's relevant for you.","Your body is doing remarkable things — celebrate it.","This is your peak window — energy, confidence and desire are all elevated. A spontaneous date night or some extra closeness tonight could be especially rewarding.","Desire is at its highest point right now. If you've been wanting to connect with Dan, this is the time — your body is fully on board.","You're at your most magnetic this week. Lean into that energy and let Dan know if you're feeling it.","This is the phase where intimacy tends to feel the most natural and the most satisfying. Make the most of it.","Your libido peaks during ovulation — it's completely normal to feel a stronger pull toward closeness and physical connection right now.","Everything is aligned this week. If the spark is there, don't overthink it — your body is giving you a green light."] },
+  { name:"Luteal",     emoji:"🍂", color:"#D4845A", bg:"#FDF3EC", maxPct:0.86,
+    greeting:"Winding down, Michelle", tagline:"A slower, more inward phase is starting.",
+    body:"Progesterone rises in this phase, bringing a calmer, more introspective mood. Energy gradually decreases and you may crave comfort, routine and cozy evenings at home.",
+    symptoms:["Bloating","Tender breasts","Food cravings","Fatigue","Mood fluctuations"],
+    tips:["Reduce caffeine and alcohol to help manage PMS symptoms later.","Your body craves warmth and nourishment — soups, cozy nights in.","Journaling and solo time are especially restorative right now.","Don't overschedule — protect your energy and rest when you can."] },
+  { name:"Late Luteal",emoji:"🌧", color:"#5B8DB8", bg:"#EBF3FA", maxPct:1.00,
+    greeting:"Almost there, Michelle", tagline:"PMS territory — be extra gentle with yourself.",
+    body:"Hormone levels are dropping ahead of your period. It's common to feel more sensitive, irritable or low. Your body is doing a lot of internal work right now — this phase passes soon.",
+    symptoms:["Irritability","Anxiety","Bloating","Breakouts","Sleep disruption"],
+    tips:["Magnesium can help ease PMS symptoms — leafy greens and dark chocolate.","Low-intensity movement like yoga or walking may lift your mood.","Extra sleep and avoiding overstimulation can make a real difference.","Be patient with yourself — these feelings are temporary and real."] }
 ];
+
+const PHASE_INFO = {
+  period:     { emoji:"🌙", name:"Menstrual (Period)",  duration:"Days 1–5",           color:"#7B4F8E", bg:"#F0E6F7", how:"Hormone levels drop to their lowest point. You may feel tired, crampy, emotional or craving comfort and rest. It's completely normal to feel low-energy and want to be alone.", physical:"Cramping, bloating, lower back ache, tender breasts, fatigue, headaches.", tip:"Your body is doing a lot of work. Rest, warmth and gentle movement are your best friends right now." },
+  follicular: { emoji:"🌸", name:"Follicular Phase",    duration:"Days 6–9 (approx)",  color:"#7A99B8", bg:"#EEF3F8", how:"Your period has ended and your body is quietly rebuilding. Estrogen begins to rise, energy starts returning and your mood gradually lifts. You may feel a sense of renewal and calm optimism.", physical:"Increasing energy, improved mood, reduced bloating, returning appetite, clearer skin.", tip:"A gentle transition phase — good for easing back into routines, light exercise and reconnecting with people." },
+  fertile:    { emoji:"🌿", name:"Fertile Window",      duration:"Days 10–12 (approx)", color:"#D4845A", bg:"#FDF3EC", how:"Estrogen is climbing steadily. You'll notice your mood, energy and libido rising. You're more sociable, optimistic and open to new experiences than earlier in your cycle.", physical:"Increasing cervical mucus, rising energy, improved skin, sharper focus.", tip:"A great time for dates, adventures and anything that excites you. Your body is in a naturally receptive state." },
+  ovulation:  { emoji:"✨", name:"Ovulation",           duration:"Days 13–16 (approx)", color:"#C45E8A", bg:"#FEF0F4", how:"Estrogen and testosterone peak — you'll likely feel your most energetic, confident and social. Many women feel their most attractive and communicative during this window.", physical:"Mild pelvic twinge, clear stretchy discharge, heightened senses, slight temperature rise.", tip:"This is your peak window for connection, creativity and confidence. Make the most of it." },
+  luteal:     { emoji:"🍂", name:"Luteal Phase",        duration:"Days 17–24 (approx)", color:"#5FA67A", bg:"#EBF6F1", how:"Progesterone rises and you may shift inward — craving quiet, routine and cozy evenings. Energy gradually decreases. Mood can fluctuate as hormones change.", physical:"Bloating, breast tenderness, food cravings, mild fatigue, mood shifts.", tip:"Protect your energy. Nourishing food, journaling and early nights will help you feel your best." },
+  pms:        { emoji:"🌧", name:"Late Luteal / PMS",   duration:"Days 25–28 (approx)", color:"#5B8DB8", bg:"#EBF3FA", how:"Hormone levels drop ahead of your period. Feelings of irritability, anxiety or low mood are very common and completely valid. Your body is preparing for a new cycle.", physical:"Irritability, anxiety, bloating, breakouts, sleep disruption, heightened sensitivity.", tip:"Be extra gentle with yourself. Magnesium, reduced caffeine and low-key plans can make a real difference." }
+};
+
+// ── MOON PHASE ──
+function getMoonPhase(date) {
+  const ref = new Date(2000, 0, 6);
+  const diff = (date - ref) / 86400000;
+  const cycle = 29.53058867;
+  const age = ((diff % cycle) + cycle) % cycle;
+  let emoji, name, spiritual, science;
+  if      (age < 1.85)  { emoji="🌑"; name="New Moon";         spiritual="A time of new beginnings and inward reflection. Set intentions and rest.";                                                    science="Some research suggests melatonin shifts around new moons may subtly influence sleep and hormonal rhythms."; }
+  else if (age < 7.38)  { emoji="🌒"; name="Waxing Crescent";  spiritual="Energy is quietly building. Small actions and hopeful intentions carry extra weight.";                                         science="As moonlight gradually increases, your body may feel a gentle pull toward more activity and outward energy."; }
+  else if (age < 9.22)  { emoji="🌓"; name="First Quarter";    spiritual="A moment of decision and momentum. Push through resistance and take action.";                                                  science="The half-lit moon marks the lunar cycle midpoint — many women report increased energy and drive around this phase."; }
+  else if (age < 14.77) { emoji="🌔"; name="Waxing Gibbous";   spiritual="Refinement and patience. You are almost at your peak — trust the process.";                                                   science="Rising moonlight intensity may correlate with heightened alertness and social energy in the days before full moon."; }
+  else if (age < 16.61) { emoji="🌕"; name="Full Moon";        spiritual="Peak illumination and emotional intensity. Feelings are heightened, energy is at its fullest.";                                science="Studies have noted changes in sleep architecture and mood intensity around full moons, possibly linked to light exposure affecting melatonin."; }
+  else if (age < 22.15) { emoji="🌖"; name="Waning Gibbous";   spiritual="A time of gratitude and releasing what no longer serves you.";                                                                 science="As light begins to wane, the body may start shifting toward more restorative, inward rhythms."; }
+  else if (age < 23.99) { emoji="🌗"; name="Last Quarter";     spiritual="Release, forgiveness and letting go. Clear space for what is coming.";                                                         science="The waning half-moon phase is associated with declining external energy and a natural draw toward rest and reflection."; }
+  else                  { emoji="🌘"; name="Waning Crescent";  spiritual="Surrender and rest. The cycle is completing — honor your need for quiet and stillness.";                                       science="Moonlight is at its dimmest. Research suggests melatonin production may be less disrupted, supporting deeper sleep and restoration."; }
+  return { emoji, name, age, spiritual, science };
+}
+
+function getMoonCycleType(moonAge, cycleDay) {
+  if (cycleDay > 5) return null;
+  if (moonAge < 3 || moonAge > 26.5) return { type:"White Moon cycle", desc:"Your period aligns with the new moon — known as the White Moon cycle. Traditionally this reflects a nurturing, inward and fertile energy attuned to the earth's rhythms." };
+  if (moonAge > 12.5 && moonAge < 17.5) return { type:"Red Moon cycle", desc:"Your period aligns with the full moon — known as the Red Moon cycle. Traditionally associated with outward, creative and magnetic energy, often linked to healers and wisdom keepers." };
+  return null;
+}
 
 // ── UTILITIES ──
 function parseISOLocal(str) {
   if (!str) return null;
   const s = String(str).trim();
-  // YYYY-MM-DD
-  if (/^\d{4}-\d{2}-\d{2}$/.test(s)) {
-    const [y,m,d] = s.split('-').map(Number);
-    return new Date(y, m-1, d);
-  }
-  // "Month D, YYYY" or "Month DD, YYYY" (raw sheet format)
-  const MON = { January:0, February:1, March:2, April:3, May:4, June:5,
-                July:6, August:7, September:8, October:9, November:10, December:11 };
-  const match = s.match(/^(\w+)\s+(\d{1,2}),?\s+(\d{4})$/);
-  if (match && MON[match[1]] !== undefined) {
-    return new Date(parseInt(match[3]), MON[match[1]], parseInt(match[2]));
-  }
+  if (/^\d{4}-\d{2}-\d{2}$/.test(s)) { const [y,m,d]=s.split('-').map(Number); return new Date(y,m-1,d); }
+  const MON={January:0,February:1,March:2,April:3,May:4,June:5,July:6,August:7,September:8,October:9,November:10,December:11};
+  const match=s.match(/^(\w+)\s+(\d{1,2}),?\s+(\d{4})$/);
+  if (match && MON[match[1]]!==undefined) return new Date(parseInt(match[3]),MON[match[1]],parseInt(match[2]));
   return null;
 }
-
-function toISO(d) {
-  return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
-}
-
+function toISO(d) { return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0'); }
 function avgCycleLen(dates) {
-  if (dates.length < 2) return 28;
-  const gaps = [];
-  for (let i = 1; i < dates.length; i++) {
-    const diff = (parseISOLocal(dates[i]) - parseISOLocal(dates[i-1])) / 86400000;
-    if (diff > 14 && diff < 50) gaps.push(diff);
-  }
+  if (dates.length<2) return 28;
+  const gaps=[];
+  for (let i=1;i<dates.length;i++) { const diff=(parseISOLocal(dates[i])-parseISOLocal(dates[i-1]))/86400000; if(diff>14&&diff<50) gaps.push(diff); }
   if (!gaps.length) return 28;
   return Math.round(gaps.reduce((a,b)=>a+b,0)/gaps.length);
 }
+function getPhase(dayInCycle,cycleLen) { const pct=dayInCycle/cycleLen; return PHASES.find(p=>pct<=p.maxPct)||PHASES[PHASES.length-1]; }
+function getDayTip(phase) { return phase.tips[Math.floor(Date.now()/86400000)%phase.tips.length]; }
 
-function getPhase(dayInCycle, cycleLen) {
-  const pct = dayInCycle / cycleLen;
-  return PHASES.find(p => pct <= p.maxPct) || PHASES[PHASES.length-1];
-}
-
-function getDayTip(phase) {
-  const tips = phase.tips;
-  const idx = Math.floor(Date.now() / 86400000) % tips.length;
-  return tips[idx];
-}
-
-
-// ── MOON PHASE ──
-function getMoonPhase(date) {
-  // Known new moon reference: Jan 6, 2000
-  const ref = new Date(2000, 0, 6);
-  const diff = (date - ref) / 86400000;
-  const cycle = 29.53058867;
-  const age = ((diff % cycle) + cycle) % cycle;
-
-  let emoji, name, energy;
-  if (age < 1.85) {
-    emoji = '🌑'; name = 'New Moon';
-    energy = { spiritual: 'A time of new beginnings and inward reflection. Set intentions and rest.', science: 'Some research suggests melatonin shifts around new moons may subtly influence sleep and hormonal rhythms.' };
-  } else if (age < 7.38) {
-    emoji = '🌒'; name = 'Waxing Crescent';
-    energy = { spiritual: 'Energy is quietly building. Small actions and hopeful intentions carry extra weight.', science: 'As moonlight gradually increases, your body may feel a gentle pull toward more activity and outward energy.' };
-  } else if (age < 9.22) {
-    emoji = '🌓'; name = 'First Quarter';
-    energy = { spiritual: 'A moment of decision and momentum. Push through resistance and take action.', science: 'The half-lit moon marks the lunar cycle's midpoint buildup — many women report increased energy and drive around this phase.' };
-  } else if (age < 14.77) {
-    emoji = '🌔'; name = 'Waxing Gibbous';
-    energy = { spiritual: 'Refinement and patience. You're almost at your peak — trust the process.', science: 'Rising moonlight intensity may correlate with heightened alertness and social energy in the days before full moon.' };
-  } else if (age < 16.61) {
-    emoji = '🌕'; name = 'Full Moon';
-    energy = { spiritual: 'Peak illumination and emotional intensity. Feelings are heightened, energy is at its fullest.', science: 'Studies have noted changes in sleep architecture and reported mood intensity around full moons, possibly linked to light exposure affecting melatonin.' };
-  } else if (age < 22.15) {
-    emoji = '🌖'; name = 'Waning Gibbous';
-    energy = { spiritual: 'A time of gratitude and releasing what no longer serves you. Share your gifts.', science: 'As light begins to wane, the body may start shifting toward more restorative, inward rhythms.' };
-  } else if (age < 23.99) {
-    emoji = '🌗'; name = 'Last Quarter';
-    energy = { spiritual: 'Release, forgiveness and letting go. Clear space for what's coming.', science: 'The waning half-moon phase is associated with declining external energy and a natural draw toward rest and reflection.' };
-  } else {
-    emoji = '🌘'; name = 'Waning Crescent';
-    energy = { spiritual: 'Surrender and rest. The cycle is completing — honor your need for quiet and stillness.', science: 'Moonlight is at its dimmest. Research suggests melatonin production may be less disrupted, supporting deeper sleep and restoration.' };
-  }
-
-  return { emoji, name, age, energy };
-}
-
-function getMoonCycleType(moonAge, cycleDay, cycleLen) {
-  // White Moon: period aligns with new moon (traditionally associated with nurturing energy)
-  // Red Moon: period aligns with full moon (traditionally associated with creative/outward energy)
-  const onPeriod = cycleDay <= 5;
-  if (!onPeriod) return null;
-  if (moonAge < 3 || moonAge > 26.5) return { type: 'White Moon', desc: 'Your period aligns with the new moon — known as the White Moon cycle. Traditionally this reflects a nurturing, inward and fertile energy attuned to the earth's rhythms.' };
-  if (moonAge > 12.5 && moonAge < 17.5) return { type: 'Red Moon', desc: 'Your period aligns with the full moon — known as the Red Moon cycle. Traditionally associated with outward, creative and magnetic energy, often linked to healers and wisdom keepers.' };
-  return null;
-}
-
-// ── FETCH ──
+// ── FETCH / WRITE ──
 async function fetchData() {
   try {
-    const url = `${SCRIPT_URL}?action=read&t=${Date.now()}`;
-    const res = await fetch(url);
-    const json = await res.json();
-    return {
-      periodDates: (json.periodDates || []).sort(),
-      signalDates: (json.signalDates || []).sort()
-    };
-  } catch(e) {
-    console.warn("Using fallback data:", e);
-    return {
-      periodDates: [...PERIOD_DATES_FB].sort(),
-      signalDates: [...SIGNAL_DATES_FB].sort()
-    };
-  }
+    const res=await fetch(SCRIPT_URL+'?action=read&t='+Date.now());
+    const json=await res.json();
+    return { periodDates:(json.periodDates||[]).sort(), signalDates:(json.signalDates||[]).sort() };
+  } catch(e) { return { periodDates:[...PERIOD_DATES_FB].sort(), signalDates:[...SIGNAL_DATES_FB].sort() }; }
 }
-
-// ── WRITE ──
-async function writeEntry(action, dateStr) {
-  const url = `${SCRIPT_URL}?action=${action}&date=${dateStr}&t=${Date.now()}`;
-  const res = await fetch(url);
-  const json = await res.json();
-  if (!json.ok) throw new Error(json.error || "Write failed");
+async function writeEntry(action,dateStr) {
+  const res=await fetch(SCRIPT_URL+'?action='+action+'&date='+dateStr+'&t='+Date.now());
+  const json=await res.json();
+  if (!json.ok) throw new Error(json.error||'Write failed');
   return json;
 }
 
-// ── STATE ──
-let calOffset = 0;
-let appState = null;
+let calOffset=0, appState=null;
+const MONTHS=["January","February","March","April","May","June","July","August","September","October","November","December"];
+const DOWS=["Su","Mo","Tu","We","Th","Fr","Sa"];
 
-// ── CALENDAR ──
-const MONTHS = ["January","February","March","April","May","June","July","August","September","October","November","December"];
-const DOWS = ["Su","Mo","Tu","We","Th","Fr","Sa"];
-
-function buildCalendar(periodDates, signalDates, len, offset) {
-  const today = new Date();
-  const dt = new Date(today.getFullYear(), today.getMonth() + offset, 1);
-  const month = dt.getMonth();
-  const year = dt.getFullYear();
-  const firstDow = dt.getDay();
-  const daysInMonth = new Date(year, month+1, 0).getDate();
-  const todayISO = toISO(today);
-
-  // Build period & phase map
-  const lastPeriod = parseISOLocal(periodDates[periodDates.length-1]);
-  const signalSet = new Set(signalDates);
+function buildCalendar(periodDates,signalDates,len,offset) {
+  const today=new Date();
+  const dt=new Date(today.getFullYear(),today.getMonth()+offset,1);
+  const month=dt.getMonth(), year=dt.getFullYear();
+  const firstDow=dt.getDay(), daysInMonth=new Date(year,month+1,0).getDate();
+  const todayISO=toISO(today);
+  const lastPeriod=parseISOLocal(periodDates[periodDates.length-1]);
+  const signalSet=new Set(signalDates);
 
   function getDayClass(iso) {
-    const d = parseISOLocal(iso);
-    const daysSinceLast = Math.floor((d - lastPeriod) / 86400000);
-    if (daysSinceLast < 0) {
-      // Check if it was a period day for a historical period
-      for (const pd of periodDates) {
-        const p = parseISOLocal(pd);
-        const diff = Math.floor((d - p) / 86400000);
-        if (diff >= 0 && diff <= 4) return 'period';
-      }
-      return '';
-    }
-    const cycleDay = (daysSinceLast % len) + 1;
-    const ovulationDay = Math.round(len * PHASES[2].maxPct);
-    if (cycleDay <= 5) return 'period';
-    if (cycleDay === ovulationDay) return 'ovulation';
-    if (cycleDay >= ovulationDay - 4 && cycleDay < ovulationDay) return 'fertile';
-    const pct = cycleDay / len;
-    if (pct <= PHASES[1].maxPct) return 'follicular';
-    if (pct <= PHASES[3].maxPct) return 'luteal';
+    const d=parseISOLocal(iso);
+    const daysSinceLast=Math.floor((d-lastPeriod)/86400000);
+    if (daysSinceLast<0) { for (const pd of periodDates) { const p=parseISOLocal(pd); const diff=Math.floor((d-p)/86400000); if(diff>=0&&diff<=4) return 'period'; } return 'follicular'; }
+    const cycleDay=(daysSinceLast%len)+1;
+    const ovulationDay=Math.round(len*PHASES[2].maxPct);
+    if (cycleDay<=5) return 'period';
+    if (cycleDay===ovulationDay) return 'ovulation';
+    if (cycleDay>=ovulationDay-4&&cycleDay<ovulationDay) return 'fertile';
+    const pct=cycleDay/len;
+    if (pct<=PHASES[1].maxPct) return 'follicular';
+    if (pct<=PHASES[3].maxPct) return 'luteal';
     return 'pms';
   }
 
-  let html = `
-    <div class="cal-nav">
-      <button class="cal-nav-btn" onclick="changeMonth(-1)">‹</button>
-      <div style="text-align:center">
-        <span class="cal-month">${MONTHS[month]} ${year}</span>
-        ${offset > 0 ? '<div style="font-size:11px;color:var(--ink-lt);margin-top:2px;font-style:italic">Estimated cycle based on data</div>' : ''}
-      </div>
-      <button class="cal-nav-btn" onclick="changeMonth(1)">›</button>
-    </div>
-    <div class="cal-grid">
-      ${DOWS.map(d=>`<div class="cal-dow">${d}</div>`).join('')}
-  `;
-
-  for (let i = 0; i < firstDow; i++) html += `<div class="cal-day empty"></div>`;
-
-  for (let day = 1; day <= daysInMonth; day++) {
-    const iso = `${year}-${String(month+1).padStart(2,'0')}-${String(day).padStart(2,'0')}`;
-    const phaseClass = getDayClass(iso);
-    const isToday = iso === todayISO ? ' today' : '';
-    const hasSignal = signalSet.has(iso) ? ' signal' : '';
-    html += `<div class="cal-day${phaseClass?' '+phaseClass:''}${isToday}${hasSignal}" onclick="tapDay('${iso}')">${day}</div>`;
+  let h='<div class="cal-nav"><button class="cal-nav-btn" onclick="changeMonth(-1)">&#8249;</button>'
+        +'<div style="text-align:center"><span class="cal-month">'+MONTHS[month]+' '+year+'</span>'
+        +(offset>0?'<div style="font-size:11px;color:var(--ink-lt);margin-top:2px;font-style:italic">Estimated cycle based on data</div>':'')
+        +'</div><button class="cal-nav-btn" onclick="changeMonth(1)">&#8250;</button></div>'
+        +'<div class="cal-grid">'+DOWS.map(d=>'<div class="cal-dow">'+d+'</div>').join('');
+  for (let i=0;i<firstDow;i++) h+='<div class="cal-day empty"></div>';
+  for (let day=1;day<=daysInMonth;day++) {
+    const iso=year+'-'+String(month+1).padStart(2,'0')+'-'+String(day).padStart(2,'0');
+    const pc=getDayClass(iso), it=iso===todayISO?' today':'', sg=signalSet.has(iso)?' signal':'';
+    h+='<div class="cal-day'+(pc?' '+pc:'')+it+sg+'" onclick="tapDay(\''+iso+'\')">'+day+'</div>';
   }
-
-  html += `</div>
-    <div class="cal-legend">
-      <span class="leg-chip" onclick="openPhaseInfo('period')" style="background:#E8D4EE;color:#7B4F8E">🌙 Period</span>
-      <span class="leg-chip" onclick="openPhaseInfo('follicular')" style="background:#EEF3F8;color:#7A99B8">🌸 Follicular</span>
-      <span class="leg-chip" onclick="openPhaseInfo('ovulation')" style="background:var(--rose-lt);color:#C45E8A">✨ Ovulation</span>
-      <span class="leg-chip" onclick="openPhaseInfo('fertile')" style="background:#FDEAE0;color:#D4845A">🌿 Fertile</span>
-      <span class="leg-chip" onclick="openPhaseInfo('luteal')" style="background:var(--sage-lt);color:#5FA67A">🍂 Luteal</span>
-      <span class="leg-chip" onclick="openPhaseInfo('pms')" style="background:var(--blue-lt);color:#5B8DB8">🌧 PMS</span>
-    </div>`;
-  return html;
+  h+='</div><div class="cal-legend">'
+    +'<span class="leg-chip" onclick="openPhaseInfo(\'period\')"     style="background:#E8D4EE;color:#7B4F8E">🌙 Period</span>'
+    +'<span class="leg-chip" onclick="openPhaseInfo(\'follicular\')" style="background:#EEF3F8;color:#7A99B8">🌸 Follicular</span>'
+    +'<span class="leg-chip" onclick="openPhaseInfo(\'fertile\')"    style="background:#FDEAE0;color:#D4845A">🌿 Fertile</span>'
+    +'<span class="leg-chip" onclick="openPhaseInfo(\'ovulation\')"  style="background:var(--rose-lt);color:#C45E8A">✨ Ovulation</span>'
+    +'<span class="leg-chip" onclick="openPhaseInfo(\'luteal\')"     style="background:var(--sage-lt);color:#5FA67A">🍂 Luteal</span>'
+    +'<span class="leg-chip" onclick="openPhaseInfo(\'pms\')"        style="background:var(--blue-lt);color:#5B8DB8">🌧 PMS</span>'
+    +'</div>';
+  return h;
 }
 
 function changeMonth(dir) {
-  calOffset += dir;
-  const { periodDates, signalDates, len } = appState;
-  document.getElementById('calContainer').innerHTML = buildCalendar(periodDates, signalDates, len, calOffset);
+  calOffset+=dir;
+  document.getElementById('calContainer').innerHTML=buildCalendar(appState.periodDates,appState.signalDates,appState.len,calOffset);
 }
 
-// ── RENDER ──
-function render(periodDates, signalDates) {
-  const today = new Date();
-  const todayISO = toISO(today);
-  const len = avgCycleLen(periodDates);
-  const last = periodDates[periodDates.length-1];
-  const lastDate = parseISOLocal(last);
-  const rawDaysSince = Math.floor((today - lastDate) / 86400000);
-  const dayInCycle = (rawDaysSince % len) + 1;
-  const phase = getPhase(dayInCycle, len);
-  const tip = getDayTip(phase);
-  const onPeriod = phase.name === "Menstrual";
+function render(periodDates,signalDates) {
+  const today=new Date();
+  const len=avgCycleLen(periodDates);
+  const lastDate=parseISOLocal(periodDates[periodDates.length-1]);
+  const rawDaysSince=Math.floor((today-lastDate)/86400000);
+  const dayInCycle=(rawDaysSince%len)+1;
+  const phase=getPhase(dayInCycle,len);
+  const tip=getDayTip(phase);
+  const onPeriod=phase.name==="Menstrual";
+  const nextPeriodDay=len-rawDaysSince%len;
+  const nextPeriodStr=new Date(today.getTime()+nextPeriodDay*86400000).toLocaleDateString('en-US',{month:'short',day:'numeric'});
+  const daysToOv=(len-14)-dayInCycle;
+  appState={periodDates,signalDates,len};
 
-  // Days until next period
-  const nextPeriodDay = len - rawDaysSince % len;
-  const nextPeriodDate = new Date(today.getTime() + nextPeriodDay * 86400000);
-  const nextPeriodStr = nextPeriodDate.toLocaleDateString('en-US', { month:'short', day:'numeric' });
+  // Moon
+  const moon=getMoonPhase(today);
+  const moonCycle=getMoonCycleType(moon.age,dayInCycle);
+  const moonCycleHtml=moonCycle
+    ? '<div style="background:#F5F0FF;border-radius:10px;padding:0.75rem;margin-top:0.75rem">'
+      +'<div style="font-size:12px;font-weight:600;color:var(--plum);margin-bottom:4px">🌀 '+moonCycle.type+'</div>'
+      +'<div style="font-size:13px;color:var(--ink-mid);line-height:1.5">'+moonCycle.desc+'</div></div>'
+    : '';
 
-  // Ovulation window (~14 days before next period)
-  const ovDay = len - 14;
-  const daysToOv = ovDay - dayInCycle;
+  // Banner
+  let banner='';
+  if (rawDaysSince>len+2&&!onPeriod) banner='<div class="banner fadein" style="background:#F0E6F7;border:1px solid #DCC8E8;"><div class="banner-icon">📋</div><div><div class="banner-title" style="color:var(--plum)">Period might be overdue</div><div class="banner-body" style="color:var(--ink-mid)">It\'s been '+rawDaysSince+' days. Has your period started? Tap "Log period start" below to record it.</div></div></div>';
+  else if (nextPeriodDay<=3&&!onPeriod) banner='<div class="banner fadein" style="background:var(--blue-lt);border:1px solid #B8D4EE;"><div class="banner-icon">🗓</div><div><div class="banner-title" style="color:var(--blue)">Period arriving soon</div><div class="banner-body" style="color:var(--ink-mid)">Expected in '+nextPeriodDay+' day'+(nextPeriodDay!==1?'s':'')+' around '+nextPeriodStr+'. Stock up on what you need.</div></div></div>';
 
-  // Save state for calendar
-  appState = { periodDates, signalDates, len };
+  document.getElementById('app').innerHTML=
+    '<div class="header fadein"><div class="header-inner">'
+    +'<div class="header-greeting">'+phase.emoji+' <em>'+phase.greeting+'</em></div>'
+    +'<div class="phase-pill"><div class="phase-dot"></div>Day '+dayInCycle+' of '+len+' &middot; '+phase.name+' phase</div>'
+    +'</div></div>'
 
-  // Moon phase
-  const moon = getMoonPhase(today);
-  const moonCycle = getMoonCycleType(moon.age, dayInCycle, len);
-  const moonCardHtml = `
-    <div class="insight-header">
-      <div class="insight-icon" style="background:#F5F0FF;font-size:1.5rem">${moon.emoji}</div>
-      <div>
-        <div class="insight-title">${moon.name}</div>
-        <div class="insight-sub">Lunar day ${Math.round(moon.age)} of 29</div>
-      </div>
-    </div>
-    <div class="insight-body" style="margin-bottom:0.75rem">
-      <strong style="color:var(--plum)">Energetically:</strong> ${moon.energy.spiritual}
-    </div>
-    <div class="insight-body" style="margin-bottom:${moonCycle ? '0.75rem' : '0'}">
-      <strong style="color:var(--ink-mid)">Science says:</strong> ${moon.energy.science}
-    </div>
-  ${moonCycle ? '<div style="background:#F5F0FF;border-radius:10px;padding:0.75rem;margin-top:0.5rem"><div style="font-size:12px;font-weight:600;color:var(--plum);margin-bottom:4px">🌀 ' + moonCycle.type + '</div><div style="font-size:13px;color:var(--ink-mid);line-height:1.5">' + moonCycle.desc + '</div></div>' : ''}TYPE html>
-<html lang="en">
-<head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
-<title>My Cycle</title>
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
-<style>
-  :root {
-    --rose:     #E8678A;
-    --rose-lt:  #F7C5D2;
-    --plum:     #7B4F8E;
-    --sage:     #5FA67A;
-    --sage-lt:  #C8E6D4;
-    --amber:    #D4845A;
-    --amber-lt: #F5D4C0;
-    --blue:     #5B8DB8;
-    --blue-lt:  #C8DDF0;
-    --mist:     #F7F4F8;
-    --ink:      #2C2035;
-    --ink-mid:  #5C5068;
-    --ink-lt:   #A09AAA;
-    --card-bg:  #FFFFFF;
-    --border:   #EDE8F2;
-  }
+    +'<div class="card-strip fadein">'
+    +'<div class="stat-card"><div class="stat-label">Cycle day</div><div class="stat-value">'+dayInCycle+'</div><div class="stat-sub">of '+len+' days</div></div>'
+    +'<div class="stat-card"><div class="stat-label">Next period</div><div class="stat-value">'+nextPeriodDay+'</div><div class="stat-sub">days &middot; '+nextPeriodStr+'</div></div>'
+    +(!onPeriod&&daysToOv>0?'<div class="stat-card"><div class="stat-label">Ovulation in</div><div class="stat-value">'+daysToOv+'</div><div class="stat-sub">days</div></div>':'')
+    +'<div class="stat-card"><div class="stat-label">Avg cycle</div><div class="stat-value">'+len+'</div><div class="stat-sub">days</div></div>'
+    +'</div>'
 
-  * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
+    +banner
 
-  body {
-    font-family: 'DM Sans', sans-serif;
-    background: var(--mist);
-    color: var(--ink);
-    min-height: 100vh;
-    padding-bottom: 3rem;
-    font-size: 16px;
-  }
+    +'<div class="section fadein"><div class="section-title">How you\'re likely feeling</div>'
+    +'<div class="insight-card">'
+    +'<div class="insight-header"><div class="insight-icon" style="background:'+phase.bg+';font-size:1.3rem">'+phase.emoji+'</div>'
+    +'<div><div class="insight-title">'+phase.name+' phase</div><div class="insight-sub">'+phase.tagline+'</div></div></div>'
+    +'<div class="insight-body">'+phase.body+'</div>'
+    +'<div class="chips">'+phase.symptoms.map(s=>'<span class="chip">'+s+'</span>').join('')+'</div>'
+    +'</div>'
+    +'<div class="insight-card">'
+    +'<div class="insight-header"><div class="insight-icon" style="background:#FFF8E8;">💡</div>'
+    +'<div><div class="insight-title">Today\'s tip</div><div class="insight-sub">Cycle-matched advice</div></div></div>'
+    +'<div class="insight-body">'+tip+'</div>'
+    +'</div></div>'
 
-  /* ── HEADER ── */
-  @keyframes hueRotate {
-    0%   { opacity: 1; }
-    33%  { opacity: 0.4; }
-    66%  { opacity: 0.8; }
-    100% { opacity: 1; }
-  }
-  @keyframes hueRotate2 {
-    0%   { opacity: 0.3; }
-    50%  { opacity: 1; }
-    100% { opacity: 0.3; }
-  }
-  .header {
-    background: #7B4F8E;
-    padding: 2.5rem 1.5rem 3.5rem;
-    position: relative;
-    overflow: hidden;
-  }
-  .header::before {
-    content: '';
-    position: absolute;
-    inset: 0;
-    background: linear-gradient(160deg, #9B5FA0 0%, #E8678A 100%);
-    animation: hueRotate 6s ease-in-out infinite;
-    z-index: 0;
-  }
-  .header::after {
-    content: '';
-    position: absolute;
-    inset: 0;
-    background: linear-gradient(200deg, #C45E8A 0%, #7B4F8E 60%, #E8678A 100%);
-    animation: hueRotate2 6s ease-in-out infinite;
-    z-index: 0;
-  }
+    +'<div class="section fadein"><div class="section-title">Tonight\'s moon</div>'
+    +'<div class="insight-card">'
+    +'<div class="insight-header"><div class="insight-icon" style="background:#F5F0FF;font-size:1.5rem">'+moon.emoji+'</div>'
+    +'<div><div class="insight-title">'+moon.name+'</div><div class="insight-sub">Lunar day '+Math.round(moon.age)+' of 29</div></div></div>'
+    +'<div class="insight-body" style="margin-bottom:0.6rem"><strong style="color:var(--plum)">Energetically:</strong> '+moon.spiritual+'</div>'
+    +'<div class="insight-body"><strong style="color:var(--ink-mid)">Science says:</strong> '+moon.science+'</div>'
+    +moonCycleHtml
+    +'</div></div>'
 
-  .header-inner { position: relative; z-index: 2; }
-  .app-name { display: none; }
-  .header-greeting {
-    font-family: 'DM Serif Display', serif;
-    font-size: 1.95rem;
-    color: #fff;
-    line-height: 1.2;
-    margin-bottom: 1.25rem;
-  }
-  .header-greeting em { font-style: italic; }
+    +'<div class="section fadein"><div class="section-title">Your calendar</div>'
+    +'<div class="cal-wrap"><div id="calContainer">'+buildCalendar(periodDates,signalDates,len,0)+'</div></div></div>'
 
-  /* Phase pill */
-  .phase-pill {
-    display: inline-flex;
-    align-items: center;
-    gap: 6px;
-    background: rgba(255,255,255,0.2);
-    backdrop-filter: blur(8px);
-    border: 1px solid rgba(255,255,255,0.3);
-    border-radius: 100px;
-    padding: 6px 14px;
-    font-size: 14px;
-    font-weight: 500;
-    color: #fff;
-  }
-  .phase-dot {
-    width: 8px; height: 8px;
-    border-radius: 50%;
-    background: #fff;
-    animation: pulseDot 2s ease-in-out infinite;
-  }
-  @keyframes pulseDot {
-    0%,100%{opacity:1;transform:scale(1)}
-    50%{opacity:0.5;transform:scale(0.75)}
-  }
+    +'<button class="log-btn fadein" onclick="openLog()">🩸 Log period start</button>'
+    +'<button class="signal-btn fadein" onclick="openSignal()">💜 Send Dan a signal</button>'
+    +'<div style="padding:1.5rem 1rem 0;font-size:11px;color:var(--ink-lt);text-align:center">Cycle data is private and stored only in a password-protected Google Sheet.</div>';
+}
 
-  /* ── MAIN CARD STRIP ── */
-  .card-strip {
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(90px, 1fr));
-    gap: 8px;
-    padding: 0 1rem;
-    margin-top: -1.5rem;
-    position: relative;
-    z-index: 10;
-  }
+function tapDay(iso) { openLogForDate(iso); }
+function openLog()   { openLogForDate(toISO(new Date())); }
 
-  .stat-card {
-    background: var(--card-bg);
-    border-radius: 16px;
-    padding: 12px 12px;
-    box-shadow: 0 2px 16px rgba(44,32,53,0.08);
-    border: 1px solid var(--border);
-  }
-  .stat-label {
-    font-size: 11px;
-    font-weight: 500;
-    text-transform: uppercase;
-    letter-spacing: 0.06em;
-    color: var(--ink-lt);
-    margin-bottom: 4px;
-  }
-  .stat-value {
-    font-family: 'DM Serif Display', serif;
-    font-size: 1.5rem;
-    color: var(--ink);
-    line-height: 1;
-  }
-  .stat-sub {
-    font-size: 12px;
-    color: var(--ink-lt);
-    margin-top: 2px;
-  }
+function openLogForDate(iso) {
+  const d=parseISOLocal(iso);
+  const dateStr=d.toLocaleDateString('en-US',{weekday:'long',month:'long',day:'numeric'});
+  document.getElementById('modal-title').textContent='Log period start';
+  document.getElementById('modal-sub').textContent=dateStr;
+  document.getElementById('modal-msg').textContent='';
+  document.getElementById('modal-msg').className='modal-msg';
+  document.getElementById('modal-btns').innerHTML=
+    '<button class="mbtn primary" onclick="submitLog(\'period\',\''+iso+'\')">🩸 Yes, my period started</button>'
+    +'<button class="mbtn cancel" onclick="closeModal()">Cancel</button>';
+  document.getElementById('modal').classList.add('open');
+}
 
-  /* ── SECTION ── */
-  .section { padding: 1.5rem 1rem 0; }
-  .section-title {
-    font-family: 'DM Serif Display', serif;
-    font-size: 1.1rem;
-    color: var(--ink);
-    margin-bottom: 0.75rem;
+function openSignal() {
+  const today=new Date();
+  const days=[];
+  for (let i=0;i<7;i++) {
+    const d=new Date(today.getFullYear(),today.getMonth(),today.getDate()+i);
+    const iso=toISO(d);
+    const label=i===0?'Tonight':i===1?'Tomorrow night':d.toLocaleDateString('en-US',{weekday:'long'})+' night';
+    const sub=d.toLocaleDateString('en-US',{month:'short',day:'numeric'});
+    days.push({iso,label,sub});
   }
+  document.getElementById('modal-title').textContent='Send Dan a signal';
+  document.getElementById('modal-sub').textContent="Pick a night and he'll get a heads up.";
+  document.getElementById('modal-msg').textContent='';
+  document.getElementById('modal-msg').className='modal-msg';
+  document.getElementById('modal-btns').innerHTML=days.map(d=>
+    '<button class="mbtn" onclick="submitLog(\'signal\',\''+d.iso+'\')" style="display:flex;justify-content:space-between;align-items:center;background:var(--mist);border:1px solid var(--border);color:var(--ink);text-align:left;padding:13px 16px;">'
+    +'<span style="font-weight:500">'+d.label+'</span>'
+    +'<span style="font-size:13px;color:var(--ink-lt)">'+d.sub+'</span></button>'
+  ).join('')+'<button class="mbtn cancel" onclick="closeModal()" style="margin-top:4px">Never mind</button>';
+  document.getElementById('modal').classList.add('open');
+}
 
-  /* ── INSIGHT CARD ── */
-  .insight-card {
-    background: var(--card-bg);
-    border-radius: 18px;
-    padding: 1.25rem;
-    box-shadow: 0 2px 16px rgba(44,32,53,0.07);
-    border: 1px solid var(--border);
-    margin-bottom: 0.75rem;
-  }
-  .insight-header {
-    display: flex;
-    align-items: center;
-    gap: 10px;
-    margin-bottom: 0.75rem;
-  }
-  .insight-icon {
-    width: 40px; height: 40px;
-    border-radius: 12px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    font-size: 1.2rem;
-    flex-shrink: 0;
-  }
-  .insight-title {
-    font-weight: 500;
-    font-size: 15px;
-    color: var(--ink);
-  }
-  .insight-sub {
-    font-size: 12px;
-    color: var(--ink-lt);
-    margin-top: 1px;
-  }
-  .insight-body {
-    font-size: 15px;
-    color: var(--ink-mid);
-    line-height: 1.55;
-  }
+function openPhaseInfo(key) {
+  const p=PHASE_INFO[key];
+  document.getElementById('modal-title').innerHTML=p.emoji+' '+p.name;
+  document.getElementById('modal-sub').textContent='Typically: '+p.duration;
+  document.getElementById('modal-msg').textContent='';
+  document.getElementById('modal-msg').className='modal-msg';
+  document.getElementById('modal-btns').innerHTML=
+    '<div style="background:'+p.bg+';border-radius:12px;padding:1rem;margin-bottom:10px;text-align:left">'
+    +'<div style="font-size:12px;font-weight:600;text-transform:uppercase;letter-spacing:0.05em;color:'+p.color+';margin-bottom:6px">How you may feel</div>'
+    +'<div style="font-size:14px;color:var(--ink-mid);line-height:1.5">'+p.how+'</div></div>'
+    +'<div style="background:var(--mist);border-radius:12px;padding:1rem;margin-bottom:10px;text-align:left">'
+    +'<div style="font-size:12px;font-weight:600;text-transform:uppercase;letter-spacing:0.05em;color:var(--ink-lt);margin-bottom:6px">Common symptoms</div>'
+    +'<div style="font-size:14px;color:var(--ink-mid);line-height:1.5">'+p.physical+'</div></div>'
+    +'<div style="background:#FFF8F0;border-radius:12px;padding:1rem;margin-bottom:14px;text-align:left">'
+    +'<div style="font-size:12px;font-weight:600;text-transform:uppercase;letter-spacing:0.05em;color:#D4845A;margin-bottom:6px">💡 Tip</div>'
+    +'<div style="font-size:14px;color:var(--ink-mid);line-height:1.5">'+p.tip+'</div></div>'
+    +'<button class="mbtn cancel" onclick="closeModal()">Close</button>';
+  document.getElementById('modal').classList.add('open');
+}
 
-  /* ── SYMPTOM CHIPS ── */
-  .chips {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 7px;
-    margin-top: 0.75rem;
-  }
-  .chip {
-    background: var(--mist);
-    border: 1px solid var(--border);
-    border-radius: 100px;
-    padding: 5px 12px;
-    font-size: 13px;
-    color: var(--ink-mid);
-    font-weight: 400;
-  }
+function closeModal(e) {
+  if (!e||e.target===document.getElementById('modal')) document.getElementById('modal').classList.remove('open');
+}
 
-  /* ── BANNER ── */
-  .banner {
-    margin: 1.5rem 1rem 0;
-    border-radius: 16px;
-    padding: 1rem 1.25rem;
-    display: flex;
-    align-items: flex-start;
-    gap: 12px;
+async function submitLog(action,iso) {
+  const msg=document.getElementById('modal-msg');
+  const btns=document.getElementById('modal-btns');
+  btns.style.opacity='0.5'; btns.style.pointerEvents='none';
+  msg.textContent=action==='signal'?"Sending. He's going to love it! 💜":'Saving...';
+  msg.className='modal-msg';
+  try {
+    await writeEntry(action,iso);
+    msg.textContent=action==='period'?'Period logged. The calendar will update.':'Signal sent to Dan. 💜';
+    msg.className='modal-msg ok';
+    if (action==='signal') playSignalChime();
+    setTimeout(()=>{closeModal();init();},1500);
+  } catch(e) {
+    msg.textContent='Could not save. Check your connection and try again.';
+    msg.className='modal-msg err';
+    btns.style.opacity='1'; btns.style.pointerEvents='auto';
   }
-  .banner-icon { font-size: 1.4rem; flex-shrink: 0; margin-top: 1px; }
-  .banner-title { font-weight: 600; font-size: 14px; margin-bottom: 3px; }
-  .banner-body { font-size: 13px; line-height: 1.45; }
+}
 
-  /* ── CALENDAR ── */
-  .cal-wrap {
-    background: var(--card-bg);
-    border-radius: 18px;
-    padding: 1rem;
-    box-shadow: 0 2px 16px rgba(44,32,53,0.07);
-    border: 1px solid var(--border);
-  }
-  .cal-nav {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    margin-bottom: 0.75rem;
-  }
-  .cal-nav-btn {
-    background: none;
-    border: 1px solid var(--border);
-    border-radius: 8px;
-    width: 32px; height: 32px;
-    cursor: pointer;
-    font-size: 16px;
-    color: var(--ink-mid);
-    display: flex;
-    align-items: center;
-    justify-content: center;
-  }
-  .cal-month {
-    font-family: 'DM Serif Display', serif;
-    font-size: 1rem;
-    color: var(--ink);
-  }
-  .cal-grid {
-    display: grid;
-    grid-template-columns: repeat(7, 1fr);
-    gap: 3px;
-  }
-  .cal-dow {
-    font-size: 10px;
-    font-weight: 600;
-    text-align: center;
-    color: var(--ink-lt);
-    text-transform: uppercase;
-    letter-spacing: 0.04em;
-    padding: 4px 0;
-  }
-  .cal-day {
-    aspect-ratio: 1;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    border-radius: 10px;
-    font-size: 13px;
-    cursor: pointer;
-    transition: opacity 0.1s;
-    position: relative;
-    color: var(--ink);
-  }
-  .cal-day:active { opacity: 0.6; }
-  .cal-day.empty { pointer-events: none; }
-  .cal-day.today {
-    border: 2px solid var(--rose);
-    font-weight: 600;
-  }
-  .cal-day.period    { background: #E8D4EE; color: var(--plum); }
-  .cal-day.follicular { background: #EEF3F8; color: #7A99B8; }
-  .cal-day.ovulation { background: var(--rose-lt); color: var(--rose); font-weight: 600; }
-  .cal-day.fertile   { background: #FDEAE0; color: var(--amber); }
-  .cal-day.luteal    { background: var(--sage-lt); color: var(--sage); }
-  .cal-day.pms       { background: var(--blue-lt); color: var(--blue); }
-  .cal-day.signal    { background: #E8F8EE; }
-  .cal-day.signal::after {
-    content: '💜';
-    font-size: 9px;
-    position: absolute;
-    bottom: 2px; right: 2px;
-  }
+function playSignalChime() {
+  try {
+    const ctx=new(window.AudioContext||window.webkitAudioContext)();
+    [523.25,659.25,783.99,1046.50].forEach((freq,i)=>{
+      const osc=ctx.createOscillator(), gain=ctx.createGain();
+      osc.connect(gain); gain.connect(ctx.destination);
+      osc.type='sine';
+      osc.frequency.setValueAtTime(freq,ctx.currentTime+i*0.12);
+      gain.gain.setValueAtTime(0,ctx.currentTime+i*0.12);
+      gain.gain.linearRampToValueAtTime(0.18,ctx.currentTime+i*0.12+0.02);
+      gain.gain.exponentialRampToValueAtTime(0.001,ctx.currentTime+i*0.12+0.35);
+      osc.start(ctx.currentTime+i*0.12);
+      osc.stop(ctx.currentTime+i*0.12+0.35);
+    });
+  } catch(e) {}
+}
 
-  .cal-legend {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 7px;
-    margin-top: 0.85rem;
-    justify-content: center;
-  }
-  .leg-chip {
-    font-size: 12px;
-    font-weight: 500;
-    padding: 5px 11px;
-    border-radius: 100px;
-    cursor: pointer;
-    transition: transform 0.1s, opacity 0.1s;
-    user-select: none;
-  }
-  .leg-chip:active { transform: scale(0.94); opacity: 0.8; }
-
-  /* ── LOG BUTTON ── */
-  .log-btn {
-    display: block;
-    width: calc(100% - 2rem);
-    margin: 1.25rem 1rem 0;
-    padding: 1rem;
-    background: linear-gradient(135deg, var(--plum), var(--rose));
-    color: #fff;
-    border: none;
-    border-radius: 16px;
-    font-family: 'DM Sans', sans-serif;
-    font-size: 16px;
-    font-weight: 500;
-    cursor: pointer;
-    box-shadow: 0 4px 20px rgba(232,103,138,0.35);
-    transition: transform 0.15s, box-shadow 0.15s;
-  }
-  .log-btn:active {
-    transform: scale(0.97);
-    box-shadow: 0 2px 10px rgba(232,103,138,0.25);
-  }
-
-  /* Signal button */
-  .signal-btn {
-    display: block;
-    width: calc(100% - 2rem);
-    margin: 0.75rem 1rem 0;
-    padding: 1rem;
-    background: var(--card-bg);
-    color: var(--plum);
-    border: 1.5px solid var(--rose-lt);
-    border-radius: 16px;
-    font-family: 'DM Sans', sans-serif;
-    font-size: 15px;
-    font-weight: 500;
-    cursor: pointer;
-    transition: all 0.15s;
-    box-shadow: 0 2px 8px rgba(44,32,53,0.05);
-  }
-  .signal-btn:active {
-    background: #FBF0F4;
-    transform: scale(0.97);
-  }
-
-  /* ── MODAL ── */
-  .modal-overlay {
-    display: none;
-    position: fixed;
-    inset: 0;
-    background: rgba(44,32,53,0.45);
-    z-index: 100;
-    backdrop-filter: blur(3px);
-    align-items: flex-end;
-  }
-  .modal-overlay.open { display: flex; }
-  .modal {
-    background: var(--card-bg);
-    border-radius: 24px 24px 0 0;
-    padding: 1.5rem 1.5rem 2.5rem;
-    width: 100%;
-    animation: slideUp 0.3s cubic-bezier(0.34,1.26,0.64,1);
-  }
-  @keyframes slideUp {
-    from { transform: translateY(60px); opacity: 0; }
-    to   { transform: translateY(0);    opacity: 1; }
-  }
-  .modal-handle {
-    width: 36px; height: 4px;
-    background: var(--border);
-    border-radius: 2px;
-    margin: 0 auto 1.25rem;
-  }
-  .modal-title {
-    font-family: 'DM Serif Display', serif;
-    font-size: 1.2rem;
-    margin-bottom: 0.25rem;
-  }
-  .modal-sub { font-size: 13px; color: var(--ink-lt); margin-bottom: 1.25rem; }
-  .modal-btns { display: flex; flex-direction: column; gap: 10px; }
-  .mbtn {
-    padding: 14px;
-    border-radius: 14px;
-    border: none;
-    font-family: 'DM Sans', sans-serif;
-    font-size: 15px;
-    font-weight: 500;
-    cursor: pointer;
-    width: 100%;
-    transition: opacity 0.15s;
-  }
-  .mbtn:active { opacity: 0.7; }
-  .mbtn.primary { background: linear-gradient(135deg, var(--plum), var(--rose)); color: #fff; }
-  .mbtn.cancel { background: var(--mist); color: var(--ink-mid); border: 1px solid var(--border); font-weight: 400; }
-  .modal-msg { font-size: 13px; color: var(--ink-lt); text-align: center; padding: 0.5rem 0; }
-  .modal-msg.ok { color: var(--sage); }
-  .modal-msg.err { color: var(--rose); }
-
-  /* ── LOADING ── */
-  .loading-wrap {
-    padding: 3rem 1.5rem;
-    text-align: center;
-    color: var(--ink-lt);
-    font-size: 14px;
-  }
-  .spinner {
-    width: 36px; height: 36px;
-    border-radius: 50%;
-    border: 3px solid var(--border);
-    border-top-color: var(--rose);
-    animation: spin 0.8s linear infinite;
-    margin: 0 auto 1rem;
-  }
-  @keyframes spin { to { transform: rotate(360deg); } }
-
-  /* ── DESKTOP ── */
-  @media (min-width: 640px) {
-    body { background: #EDE8F4; }
-    .header { border-radius: 0 0 24px 24px; }
-    .desktop-shell {
-      max-width: 540px;
-      margin: 0 auto;
-      background: var(--mist);
-      min-height: 100vh;
-      box-shadow: 0 0 60px rgba(44,32,53,0.15);
-    }
-  }
-
-  .fadein { animation: fadeUp 0.4s ease both; }
-  @keyframes fadeUp {
-    from { opacity:0; transform:translateY(8px); }
-    to   { opacity:1; transform:translateY(0); }
-  }
-</style>
-</head>
-<body>
-<div class="desktop-shell">
-<div id="app">
-  <div class="loading-wrap">
-    <div class="spinner"></div>
-    Loading your cycle data...
-  </div>
-</div>
-</div>
-
-<!-- Modal -->
-<div class="modal-overlay" id="modal" onclick="closeModal(event)">
-  <div class="modal">
-    <div class="modal-handle"></div>
-    <div class="modal-title" id="modal-title">Log period</div>
-    <div class="modal-sub" id="modal-sub">Confirm today as your period start date.</div>
-    <div class="modal-btns" id="modal-btns"></div>
-    <div class="modal-msg" id="modal-msg"></div>
-  </div>
-</div>
-
-
+async function init() {
+  calOffset=0;
+  const {periodDates,signalDates}=await fetchData();
+  render(periodDates,signalDates);
+}
+init();
+</script>
 </body>
 </html>
