@@ -115,15 +115,7 @@
   <div class="loading-wrap"><div class="spinner"></div>Loading your cycle data...</div>
 </div>
 </div>
-<div class="modal-overlay" id="modal" onclick="closeModal(event)">
-  <div class="modal">
-    <div class="modal-handle"></div>
-    <div class="modal-title" id="modal-title">Log period</div>
-    <div class="modal-sub"  id="modal-sub"></div>
-    <div class="modal-btns" id="modal-btns"></div>
-    <div class="modal-msg"  id="modal-msg"></div>
-  </div>
-</div>
+<!-- modal injected dynamically -->
 <script>
 const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbyWGOHTaXyYnTmwr1hgdDw91YwTStvimyLVHtKLz5x6w1BOJLbenEBls_OFOLDCPVR6/exec";
 const PERIOD_DATES_FB = ["2025-07-02","2025-07-30","2025-08-23","2025-09-20","2025-10-16","2025-11-10","2025-12-09","2026-01-02","2026-01-28","2026-02-23","2026-03-26"];
@@ -377,11 +369,6 @@ function tapDay(iso) {
   const isToday    = iso === toISO(new Date());
   const isFuture   = d > new Date();
 
-  document.getElementById('modal-title').textContent = dateStr;
-  document.getElementById('modal-sub').textContent = phase.emoji + ' Day ' + cycleDay + ' of ' + len + ' — ' + phase.name;
-  document.getElementById('modal-msg').textContent = '';
-  document.getElementById('modal-msg').className = 'modal-msg';
-
   let body = '';
 
   // Phase summary
@@ -409,8 +396,7 @@ function tapDay(iso) {
   body += '<button class="mbtn cancel" onclick="closeModal()">Close</button>';
   body += '</div>';
 
-  document.getElementById('modal-btns').innerHTML = body;
-  document.getElementById('modal').classList.add('open');
+  showModal(dateStr, phase.emoji + ' Day ' + cycleDay + ' of ' + len + ' — ' + phase.name, body);
 }
 function openLog()   { openLogForDate(toISO(new Date())); }
 
@@ -451,11 +437,7 @@ function openSignal() {
 
 function openPhaseInfo(key) {
   const p=PHASE_INFO[key];
-  document.getElementById('modal-title').innerHTML=p.emoji+' '+p.name;
-  document.getElementById('modal-sub').textContent='Typically: '+p.duration;
-  document.getElementById('modal-msg').textContent='';
-  document.getElementById('modal-msg').className='modal-msg';
-  document.getElementById('modal-btns').innerHTML=
+  showModal(p.emoji+' '+p.name, 'Typically: '+p.duration,
     '<div style="background:'+p.bg+';border-radius:12px;padding:1rem;margin-bottom:10px;text-align:left">'
     +'<div style="font-size:12px;font-weight:600;text-transform:uppercase;letter-spacing:0.05em;color:'+p.color+';margin-bottom:6px">How you may feel</div>'
     +'<div style="font-size:14px;color:var(--ink-mid);line-height:1.5">'+p.how+'</div></div>'
@@ -465,8 +447,7 @@ function openPhaseInfo(key) {
     +'<div style="background:#FFF8F0;border-radius:12px;padding:1rem;margin-bottom:14px;text-align:left">'
     +'<div style="font-size:12px;font-weight:600;text-transform:uppercase;letter-spacing:0.05em;color:#D4845A;margin-bottom:6px">💡 Tip</div>'
     +'<div style="font-size:14px;color:var(--ink-mid);line-height:1.5">'+p.tip+'</div></div>'
-    +'<button class="mbtn cancel" onclick="closeModal()">Close</button>';
-  document.getElementById('modal').classList.add('open');
+    +'<button class="mbtn cancel" onclick="closeModal()">Close</button>');
 }
 
 
@@ -515,50 +496,67 @@ function openSymptom(isoOverride) {
   };
   window.submitSymptom = async function(iso) {
     const feelings = Array.from(selected).join(', ');
-    const msg = document.getElementById('modal-msg');
-    const btns = document.getElementById('modal-btns');
-    btns.style.opacity='0.5'; btns.style.pointerEvents='none';
-    msg.textContent='Saving...'; msg.className='modal-msg';
+    const btns=document.getElementById('modal-btns');
+    if(btns){btns.style.opacity='0.5';btns.style.pointerEvents='none';}
+    modalMsg('Saving...');
     try {
       await writeEntry('symptom', iso+'|'+encodeURIComponent(feelings));
-      msg.textContent='Logged! How you feel matters.';
-      msg.className='modal-msg ok';
-      setTimeout(()=>{ window.init(); }, 1500);
+      modalMsg('Logged! How you feel matters.','ok');
+      setTimeout(()=>{ closeModal(); init(); }, 1500);
     } catch(e) {
-      msg.textContent='Could not save. Try again.';
-      msg.className='modal-msg err';
-      btns.style.opacity='1'; btns.style.pointerEvents='auto';
+      modalMsg('Could not save. Try again.','err');
+      if(btns){btns.style.opacity='1';btns.style.pointerEvents='auto';}
     }
   };
 
-  document.getElementById('modal-title').textContent = 'How are you feeling?';
-  document.getElementById('modal-sub').textContent = 'Select all that apply.';
-  document.getElementById('modal-msg').textContent = '';
-  document.getElementById('modal-msg').className = 'modal-msg';
+  showModal('How are you feeling?', 'Select all that apply.', '');
   renderFeelings();
-  document.getElementById('modal').classList.add('open');
 }
 
-function closeModal(e) {
-  if (!e||e.target===document.getElementById('modal')) document.getElementById('modal').classList.remove('open');
+function showModal(title, sub, btnsHtml) {
+  closeModal();
+  const o = document.createElement('div');
+  o.className = 'modal-overlay';
+  o.id = 'modal-overlay';
+  o.onclick = e => { if (e.target === o) closeModal(); };
+  o.innerHTML = '<div class="modal">'
+    + '<div class="modal-handle"></div>'
+    + '<div class="modal-title">' + title + '</div>'
+    + '<div class="modal-sub" id="modal-sub" style="font-size:13px;color:var(--ink-lt);margin-bottom:1.25rem"></div>'
+    + '<div class="modal-btns" id="modal-btns">' + btnsHtml + '</div>'
+    + '<div class="modal-msg" id="modal-msg" style="font-size:13px;color:var(--ink-lt);text-align:center;padding:0.5rem 0"></div>'
+    + '</div>';
+  document.body.appendChild(o);
+  if (sub) document.getElementById('modal-sub').textContent = sub;
+}
+function closeModal() {
+  const el = document.getElementById('modal-overlay');
+  if (el) el.remove();
+}
+function modalMsg(text, type) {
+  const el = document.getElementById('modal-msg');
+  if (!el) return;
+  el.textContent = text;
+  el.className = 'modal-msg' + (type ? ' ' + type : '');
+  el.style.color = type === 'ok' ? 'var(--sage)' : type === 'err' ? 'var(--rose)' : 'var(--ink-lt)';
+}
+function modalBtns(html) {
+  const el = document.getElementById('modal-btns');
+  if (el) el.innerHTML = html;
 }
 
 async function submitLog(action,iso) {
-  const msg=document.getElementById('modal-msg');
   const btns=document.getElementById('modal-btns');
-  btns.style.opacity='0.5'; btns.style.pointerEvents='none';
-  msg.textContent=action==='signal'?"Sending. He's going to love it! 💜":'Saving...';
-  msg.className='modal-msg';
+  if(btns){btns.style.opacity='0.5';btns.style.pointerEvents='none';}
+  modalMsg(action==='signal'?"Sending. He's going to love it! 💜":'Saving...');
   try {
     await writeEntry(action,iso);
-    msg.textContent=action==='period'?'Period logged. The calendar will update.':'Signal sent to Dan. 💜';
-    msg.className='modal-msg ok';
-    if (action==='signal') playSignalChime();
-    setTimeout(()=>{ init(); },1500);
+    modalMsg(action==='period'?'Period logged. The calendar will update.':'Signal sent to Dan. 💜','ok');
+    if(action==='signal') playSignalChime();
+    setTimeout(()=>{ closeModal(); init(); },1500);
   } catch(e) {
-    msg.textContent='Could not save. Check your connection and try again.';
-    msg.className='modal-msg err';
-    btns.style.opacity='1'; btns.style.pointerEvents='auto';
+    modalMsg('Could not save. Check your connection and try again.','err');
+    if(btns){btns.style.opacity='1';btns.style.pointerEvents='auto';}
   }
 }
 
@@ -581,16 +579,10 @@ function playSignalChime() {
 
 async function init() {
   calOffset=0;
-  // Remove modal from DOM entirely during re-render
-  const modal = document.getElementById('modal');
-  const parent = modal.parentNode;
-  parent.removeChild(modal);
-  modal.className = 'modal-overlay';
-  modal.style.cssText = '';
+  closeModal();
   document.getElementById('app').innerHTML='<div class="loading-wrap"><div class="spinner"></div>Loading your cycle data...</div>';
   const {periodDates,signalDates,symptomDates,feelingsMap}=await fetchData();
   render(periodDates,signalDates,symptomDates,feelingsMap);
-  parent.appendChild(modal);
 }
 init();
 </script>
