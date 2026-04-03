@@ -125,7 +125,7 @@
   </div>
 </div>
 <script>
-const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbwUcYIYmPRQi2icfSiNcDRqxuE2ttZeK07FCqWEuZFenXZQX-Vub3lJD08OIY9m2MDi/exec";
+const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbyWGOHTaXyYnTmwr1hgdDw91YwTStvimyLVHtKLz5x6w1BOJLbenEBls_OFOLDCPVR6/exec";
 const PERIOD_DATES_FB = ["2025-07-02","2025-07-30","2025-08-23","2025-09-20","2025-10-16","2025-11-10","2025-12-09","2026-01-02","2026-01-28","2026-02-23","2026-03-26"];
 const SIGNAL_DATES_FB = [];
 
@@ -520,10 +520,10 @@ function openSymptom(isoOverride) {
     btns.style.opacity='0.5'; btns.style.pointerEvents='none';
     msg.textContent='Saving...'; msg.className='modal-msg';
     try {
-      await writeEntry('symptom', iso+'|'+feelings);
+      await writeEntry('symptom', iso+'|'+encodeURIComponent(feelings));
       msg.textContent='Logged! How you feel matters.';
       msg.className='modal-msg ok';
-      setTimeout(()=>{ closeModal(); init(); }, 1500);
+      setTimeout(()=>{ closeModal(); window.init(); }, 1500);
     } catch(e) {
       msg.textContent='Could not save. Try again.';
       msg.className='modal-msg err';
