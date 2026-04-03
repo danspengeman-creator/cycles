@@ -656,6 +656,10 @@ async function registerServiceWorker() {
   if (!('serviceWorker' in navigator) || !('Notification' in window)) return;
   try {
     await navigator.serviceWorker.register('./sw.js');
+    // Request notification permission on first visit
+    if (Notification.permission === 'default') {
+      await Notification.requestPermission();
+    }
   } catch(e) { console.warn('SW registration failed:', e); }
 }
 
