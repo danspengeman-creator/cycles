@@ -121,6 +121,7 @@
 const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbyWGOHTaXyYnTmwr1hgdDw91YwTStvimyLVHtKLz5x6w1BOJLbenEBls_OFOLDCPVR6/exec";
 const PERIOD_DATES_FB = ["2025-07-02","2025-07-30","2025-08-23","2025-09-20","2025-10-16","2025-11-10","2025-12-09","2026-01-02","2026-01-28","2026-02-23","2026-03-26"];
 const SIGNAL_DATES_FB = [];
+const SEX_DATES_FB = [];
 
 const PHASES = [
   { name:"Menstrual",  emoji:"🌙", color:"#7B4F8E", bg:"#F0E6F7", maxPct:0.18,
@@ -213,8 +214,9 @@ async function fetchData() {
     const normSymptom = (json.symptomDates||[]).map(d => { const p=parseISOLocal(d); return p?toISO(p):null; }).filter(Boolean);
     const feelingsMap = {};
     if (json.feelingsMap) Object.assign(feelingsMap, json.feelingsMap);
-    return { periodDates:(json.periodDates||[]).sort(), signalDates:(json.signalDates||[]).sort(), symptomDates:normSymptom.sort(), feelingsMap };
-  } catch(e) { return { periodDates:[...PERIOD_DATES_FB].sort(), signalDates:[...SIGNAL_DATES_FB].sort(), symptomDates:[], feelingsMap:{} }; }
+    const normSex = (json.sexDates||[]).map(d => { const p=parseISOLocal(d); return p?toISO(p):null; }).filter(Boolean);
+    return { periodDates:(json.periodDates||[]).sort(), signalDates:(json.signalDates||[]).sort(), symptomDates:normSymptom.sort(), feelingsMap, sexDates:normSex.sort() };
+  } catch(e) { return { periodDates:[...PERIOD_DATES_FB].sort(), signalDates:[...SIGNAL_DATES_FB].sort(), symptomDates:[], feelingsMap:{}, sexDates:[...SEX_DATES_FB].sort() }; }
 }
 async function writeEntry(action,dateStr) {
   const res=await fetch(SCRIPT_URL+'?action='+action+'&date='+encodeURIComponent(dateStr)+'&t='+Date.now());
@@ -227,7 +229,7 @@ let calOffset=0, appState=null;
 const MONTHS=["January","February","March","April","May","June","July","August","September","October","November","December"];
 const DOWS=["Su","Mo","Tu","We","Th","Fr","Sa"];
 
-function buildCalendar(periodDates,signalDates,symptomDates,feelingsMap,len,offset) {
+function buildCalendar(periodDates,signalDates,symptomDates,feelingsMap,sexDates,len,offset) {
   const today=new Date();
   const dt=new Date(today.getFullYear(),today.getMonth()+offset,1);
   const month=dt.getMonth(), year=dt.getFullYear();
@@ -236,6 +238,7 @@ function buildCalendar(periodDates,signalDates,symptomDates,feelingsMap,len,offs
   const lastPeriod=parseISOLocal(periodDates[periodDates.length-1]);
   const signalSet=new Set(signalDates);
   const symptomSet=new Set(symptomDates);
+  const sexSet=new Set(sexDates||[]);
   const FEELING_PRIORITY = ['Horny','Affectionate','Bloated','Cramping','Emotional','Tired','Happy'];
   function getSymptomEmoji(iso) {
     const raw = feelingsMap && feelingsMap[iso];
@@ -275,7 +278,8 @@ function buildCalendar(periodDates,signalDates,symptomDates,feelingsMap,len,offs
     const iso=year+'-'+String(month+1).padStart(2,'0')+'-'+String(day).padStart(2,'0');
     const pc=getDayClass(iso), it=iso===todayISO?' today':'', sg=signalSet.has(iso)?' signal':'', sy=symptomSet.has(iso)?' symptom':'';
     const symEmoji=symptomSet.has(iso)?'<span style="font-size:8px;position:absolute;top:1px;left:2px;line-height:1">'+getSymptomEmoji(iso)+'</span>':'';
-    h+='<div class="cal-day'+(pc?' '+pc:'')+it+sg+sy+'" onclick="tapDay(\''+iso+'\')">'+day+symEmoji+'</div>';
+    const sexEmoji=sexSet.has(iso)?'<span style="font-size:8px;position:absolute;bottom:1px;left:2px;line-height:1">😏</span>':'';
+    h+='<div class="cal-day'+(pc?' '+pc:'')+it+sg+sy+'" onclick="tapDay(\''+iso+'\')">'+day+symEmoji+sexEmoji+'</div>';
   }
   h+='</div><div class="cal-legend">'
     +'<span class="leg-chip" onclick="openPhaseInfo(\'period\')"     style="background:#E8D4EE;color:#7B4F8E">🌙 Period</span>'
@@ -290,10 +294,10 @@ function buildCalendar(periodDates,signalDates,symptomDates,feelingsMap,len,offs
 
 function changeMonth(dir) {
   calOffset+=dir;
-  document.getElementById('calContainer').innerHTML=buildCalendar(appState.periodDates,appState.signalDates,appState.symptomDates,appState.feelingsMap,appState.len,calOffset);
+  document.getElementById('calContainer').innerHTML=buildCalendar(appState.periodDates,appState.signalDates,appState.symptomDates,appState.feelingsMap,appState.sexDates,appState.len,calOffset);
 }
 
-function render(periodDates,signalDates,symptomDates,feelingsMap) {
+function render(periodDates,signalDates,symptomDates,feelingsMap,sexDates) {
   const today=new Date();
   const len=avgCycleLen(periodDates);
   const lastDate=parseISOLocal(periodDates[periodDates.length-1]);
@@ -306,7 +310,7 @@ function render(periodDates,signalDates,symptomDates,feelingsMap) {
   const nextPeriodStr=new Date(today.getTime()+nextPeriodDay*86400000).toLocaleDateString('en-US',{month:'short',day:'numeric'});
   const daysToOv=(len-14)-dayInCycle;
   // Build a map of date -> feelings for day summary
-  appState={periodDates,signalDates,symptomDates,feelingsMap:feelingsMap||{},len};
+  appState={periodDates,signalDates,symptomDates,feelingsMap:feelingsMap||{},sexDates:sexDates||[],len};
 
   // Schedule period reminder if 3 days out
   const nextPeriodDayForNotif = len - rawDaysSince % len;
@@ -368,10 +372,11 @@ function render(periodDates,signalDates,symptomDates,feelingsMap) {
     +'</div></div>'
 
     +'<div class="section"><div class="section-title">Your calendar</div>'
-    +'<div class="cal-wrap"><div id="calContainer">'+buildCalendar(periodDates,signalDates,symptomDates,feelingsMap,len,0)+'</div></div></div>'
+    +'<div class="cal-wrap"><div id="calContainer">'+buildCalendar(periodDates,signalDates,symptomDates,feelingsMap,sexDates,len,0)+'</div></div></div>'
 
     +'<button class="log-btn" onclick="openLog()">🩸 Log period start</button>'
     +'<button class="log-btn" onclick="openSymptom()" style="margin-top:0.75rem;background:linear-gradient(135deg,#5FA67A,#3d8a5e);">📝 Log a symptom</button>'
+    +'<button class="log-btn" onclick="openIntimacy()" style="margin-top:0.75rem;background:linear-gradient(135deg,#C45E8A,#E8678A);">😏 Log intimacy</button>'
     +'<button class="signal-btn" onclick="openSignal()">💜 Send Dan a signal</button>'
     +'<div style="padding:1.5rem 1rem 0;font-size:11px;color:var(--ink-lt);text-align:center">Cycle data is private and stored only in a password-protected Google Sheet.</div>';
 }
@@ -559,6 +564,51 @@ function openSymptom(isoOverride) {
   renderFeelings();
 }
 
+
+const INTIMACY_COMMENTS = [
+  "Saved. You're a lucky woman. 💋",
+  "Logged. He's a lucky man. 😏",
+  "Noted. Look at you go. 🔥",
+  "Saved. Love that you're in your element. 💋",
+  "Logged. He doesn't know how good he has it. 😉",
+  "Noted. You're on fire lately. 🔥",
+  "Saved. Own it, girl. 💋",
+  "Logged. You're winning. 😏"
+];
+
+function openIntimacy() {
+  const today = new Date();
+  const days = [];
+  for (let i = 0; i < 4; i++) {
+    const d = new Date(today.getFullYear(), today.getMonth(), today.getDate() - i);
+    const iso = toISO(d);
+    const label = i === 0 ? 'Today' : i === 1 ? 'Yesterday' :
+      d.toLocaleDateString('en-US', { weekday:'long', month:'short', day:'numeric' });
+    days.push({ iso, label });
+  }
+  showModal('Log intimacy', 'Which night?',
+    days.map(d =>
+      '<button class="mbtn" onclick="submitIntimacy(\''+d.iso+'\''+')" style="background:var(--mist);border:1px solid var(--border);color:var(--ink);text-align:left;padding:13px 16px;">'
+      + d.label + '</button>'
+    ).join('') + '<button class="mbtn cancel" onclick="closeModal()" style="margin-top:4px">Cancel</button>');
+}
+
+async function submitIntimacy(iso) {
+  const btns = document.getElementById('modal-btns');
+  if (btns) { btns.style.opacity='0.5'; btns.style.pointerEvents='none'; }
+  modalMsg('Saving...');
+  try {
+    await writeEntry('sex', iso);
+    const comment = INTIMACY_COMMENTS[Math.floor(Math.random() * INTIMACY_COMMENTS.length)];
+    modalMsg(comment, 'ok');
+    playSignalChime();
+    setTimeout(() => { closeModal(); init(); }, 1800);
+  } catch(e) {
+    modalMsg('Could not save. Try again.', 'err');
+    if (btns) { btns.style.opacity='1'; btns.style.pointerEvents='auto'; }
+  }
+}
+
 function showModal(title, sub, btnsHtml) {
   closeModal();
   const o = document.createElement('div');
@@ -707,8 +757,8 @@ async function init() {
   closeModal();
   registerServiceWorker();
   document.getElementById('app').innerHTML='<div class="loading-wrap"><div class="spinner"></div>Loading your cycle data...</div>';
-  const {periodDates,signalDates,symptomDates,feelingsMap}=await fetchData();
-  render(periodDates,signalDates,symptomDates,feelingsMap);
+  const {periodDates,signalDates,symptomDates,feelingsMap,sexDates}=await fetchData();
+  render(periodDates,signalDates,symptomDates,feelingsMap,sexDates);
 }
 init();
 </script>
