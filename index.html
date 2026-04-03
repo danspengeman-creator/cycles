@@ -296,6 +296,10 @@ function render(periodDates,signalDates,symptomDates,feelingsMap) {
   const nextPeriodDayForNotif = len - rawDaysSince % len;
   if (nextPeriodDayForNotif <= 3) schedulePeriodReminders(nextPeriodDayForNotif);
 
+  // Schedule overdue log reminders if period is 3-7 days late
+  const rawDaysOverdue = rawDaysSince - len;
+  if (rawDaysOverdue >= 3 && rawDaysOverdue <= 7 && !onPeriod) scheduleOverdueReminders(rawDaysOverdue);
+
   // Moon
   const moon=getMoonPhase(today);
   const moonCycle=getMoonCycleType(moon.age,dayInCycle);
@@ -605,6 +609,35 @@ function playSignalChime() {
 
 
 // ── PUSH NOTIFICATIONS ──
+
+async function scheduleOverdueReminders(daysOverdue) {
+  if (!('serviceWorker' in navigator) || !('Notification' in window)) return;
+  if (Notification.permission !== 'granted') return;
+
+  const reg = await navigator.serviceWorker.ready;
+  if (!reg.active) return;
+
+  // Only schedule once per overdue day
+  const key = 'overdueScheduled';
+  const lastKey = localStorage.getItem(key);
+  const thisKey = 'overdue-' + daysOverdue;
+  if (lastKey === thisKey) return;
+  localStorage.setItem(key, thisKey);
+
+  // Schedule 8am reminders for each remaining day up to 7 days overdue
+  const reminders = [];
+  const now = new Date();
+  for (let d = daysOverdue; d <= 7; d++) {
+    const daysFromNow = d - daysOverdue;
+    const fire = new Date(now.getFullYear(), now.getMonth(), now.getDate() + daysFromNow, 8, 0, 0, 0);
+    if (fire.getTime() > Date.now()) {
+      reminders.push({ fireAt: fire.getTime(), daysOverdue: d });
+    }
+  }
+  if (reminders.length) {
+    reg.active.postMessage({ type: 'SCHEDULE_OVERDUE_REMINDERS', reminders });
+  }
+}
 async function registerServiceWorker() {
   if (!('serviceWorker' in navigator) || !('Notification' in window)) return;
   try {
