@@ -215,18 +215,10 @@ function getDayTip(phase) { return phase.tips[Math.floor(Date.now()/86400000)%ph
 // ── FETCH / WRITE ──
 async function fetchData() {
   try {
-    const url = SCRIPT_URL+'?action=read&t='+Date.now();
-    console.log('Fetching:', url);
-    const res=await fetch(url);
-    const text=await res.text();
-    console.log('Raw response:', text.substring(0,300));
-    const json=JSON.parse(text);
-    console.log('periodDates:', json.periodDates);
+    const res=await fetch(SCRIPT_URL+'?action=read&t='+Date.now());
+    const json=await res.json();
     return { periodDates:(json.periodDates||[]).sort(), signalDates:(json.signalDates||[]).sort(), symptomDates:(json.symptomDates||[]).sort() };
-  } catch(e) {
-    console.error('Fetch error:', e);
-    return { periodDates:[...PERIOD_DATES_FB].sort(), signalDates:[...SIGNAL_DATES_FB].sort(), symptomDates:[] };
-  }
+  } catch(e) { return { periodDates:[...PERIOD_DATES_FB].sort(), signalDates:[...SIGNAL_DATES_FB].sort(), symptomDates:[] }; }
 }
 async function writeEntry(action,dateStr) {
   const res=await fetch(SCRIPT_URL+'?action='+action+'&date='+encodeURIComponent(dateStr)+'&t='+Date.now());
@@ -357,7 +349,7 @@ function render(periodDates,signalDates,symptomDates) {
     +'</div></div>'
 
     +'<div class="section fadein"><div class="section-title">Your calendar</div>'
-    +'<div class="cal-wrap"><div id="calContainer">'+buildCalendar(periodDates,signalDates,len,0)+'</div></div></div>'
+    +'<div class="cal-wrap"><div id="calContainer">'+buildCalendar(periodDates,signalDates,symptomDates,len,0)+'</div></div></div>'
 
     +'<button class="log-btn fadein" onclick="openLog()">🩸 Log period start</button>'
     +'<button class="log-btn fadein" onclick="openSymptom()" style="margin-top:0.75rem;background:linear-gradient(135deg,#5FA67A,#3d8a5e);">📝 Log a symptom</button>'
