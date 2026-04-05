@@ -28,11 +28,29 @@
   }
   * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
   body { font-family: 'DM Sans', sans-serif; background: var(--mist); color: var(--ink); min-height: 100vh; padding-bottom: 3rem; font-size: 16px; }
-  @keyframes hueRotate  { 0%{opacity:1}  33%{opacity:0.4} 66%{opacity:0.8} 100%{opacity:1}   }
-  @keyframes hueRotate2 { 0%{opacity:0.3} 50%{opacity:1}  100%{opacity:0.3} }
-  .header { background:#7B4F8E; padding:2.5rem 1.5rem 3.5rem; position:relative; overflow:hidden; }
-  .header::before { content:''; position:absolute; inset:0; background:linear-gradient(160deg,#9B5FA0 0%,#E8678A 100%); animation:hueRotate 6s ease-in-out infinite; z-index:0; }
-  .header::after  { content:''; position:absolute; inset:0; background:linear-gradient(200deg,#C45E8A 0%,#7B4F8E 60%,#E8678A 100%); animation:hueRotate2 6s ease-in-out infinite; z-index:0; }
+  @keyframes gradA { 0%{opacity:1} 50%{opacity:0.45} 100%{opacity:1} }
+  @keyframes gradB { 0%{opacity:0.35} 50%{opacity:1} 100%{opacity:0.35} }
+  .header { background:#7B4F8E; padding:2.5rem 1.5rem 3.5rem; position:relative; overflow:hidden; transition:background 1s ease; }
+  .header::before { content:''; position:absolute; inset:0; animation:gradA 6s ease-in-out infinite; z-index:0; }
+  .header::after  { content:''; position:absolute; inset:0; animation:gradB 6s ease-in-out infinite; z-index:0; }
+  .header.phase-menstrual  { background:#7B4F8E; }
+  .header.phase-menstrual::before  { background:linear-gradient(160deg,#E8D4EE 0%,#7B4F8E 100%); }
+  .header.phase-menstrual::after   { background:linear-gradient(200deg,#7B4F8E 0%,#E8D4EE 60%,#9B5FA0 100%); }
+  .header.phase-follicular { background:#7A99B8; }
+  .header.phase-follicular::before { background:linear-gradient(160deg,#EEF3F8 0%,#7A99B8 100%); }
+  .header.phase-follicular::after  { background:linear-gradient(200deg,#7A99B8 0%,#EEF3F8 60%,#5B8DB8 100%); }
+  .header.phase-fertile    { background:#D4845A; }
+  .header.phase-fertile::before    { background:linear-gradient(160deg,#FDEAE0 0%,#D4845A 100%); }
+  .header.phase-fertile::after     { background:linear-gradient(200deg,#D4845A 0%,#FDEAE0 60%,#C4703A 100%); }
+  .header.phase-ovulation  { background:#E8678A; }
+  .header.phase-ovulation::before  { background:linear-gradient(160deg,#F7C5D2 0%,#E8678A 100%); }
+  .header.phase-ovulation::after   { background:linear-gradient(200deg,#E8678A 0%,#F7C5D2 60%,#C45E8A 100%); }
+  .header.phase-luteal     { background:#5FA67A; }
+  .header.phase-luteal::before     { background:linear-gradient(160deg,#C8E6D4 0%,#5FA67A 100%); }
+  .header.phase-luteal::after      { background:linear-gradient(200deg,#5FA67A 0%,#C8E6D4 60%,#3d8a5e 100%); }
+  .header.phase-lateluteal { background:#5B8DB8; }
+  .header.phase-lateluteal::before { background:linear-gradient(160deg,#C8DDF0 0%,#5B8DB8 100%); }
+  .header.phase-lateluteal::after  { background:linear-gradient(200deg,#5B8DB8 0%,#C8DDF0 60%,#3a6d98 100%); }
   .header-inner   { position:relative; z-index:2; }
   .app-name { display:none; }
   .header-greeting { font-family:'DM Serif Display',serif; font-size:1.95rem; color:#fff; line-height:1.2; margin-bottom:1.25rem; }
@@ -415,6 +433,16 @@ function render(periodDates,signalDates,symptomDates,feelingsMap,sexDates) {
   const phase=getPhase(dayInCycle,len);
   const tip=getDayTip(phase);
   const onPeriod=phase.name==="Menstrual";
+  // Determine header phase class — check fertile window separately
+  const ovDay = Math.round(len * PHASES[2].maxPct);
+  const isFertileWindow = !onPeriod && dayInCycle >= ovDay - 5 && dayInCycle < ovDay - 2;
+  const phaseHeaderClass = isFertileWindow ? 'phase-fertile'
+    : phase.name === 'Menstrual'   ? 'phase-menstrual'
+    : phase.name === 'Follicular'  ? 'phase-follicular'
+    : phase.name === 'Ovulation'   ? 'phase-ovulation'
+    : phase.name === 'Luteal'      ? 'phase-luteal'
+    : 'phase-lateluteal';
+
   const nextPeriodDay=len-rawDaysSince%len;
   const nextPeriodStr=new Date(today.getTime()+nextPeriodDay*86400000).toLocaleDateString('en-US',{month:'short',day:'numeric'});
   const daysToOv=(len-14)-dayInCycle;
@@ -447,9 +475,12 @@ function render(periodDates,signalDates,symptomDates,feelingsMap,sexDates) {
   else if (nextPeriodDay<=3&&!onPeriod) banner='<div class="banner fadein" style="background:var(--blue-lt);border:1px solid #B8D4EE;"><div class="banner-icon">🗓</div><div><div class="banner-title" style="color:var(--blue)">Period arriving soon</div><div class="banner-body" style="color:var(--ink-mid)">Expected in '+nextPeriodDay+' day'+(nextPeriodDay!==1?'s':'')+' around '+nextPeriodStr+'. Stock up on what you need.</div></div></div>';
 
   document.getElementById('app').innerHTML=
-    '<div class="header"><div class="header-inner">'
+    '<div class="header '+phaseHeaderClass+'" ><div class="header-inner">'
     +'<div class="header-greeting">'+phase.emoji+' <em>'+phase.greeting+'</em></div>'
+    +'<div style="display:flex;align-items:center;justify-content:space-between;gap:8px">'
     +'<div class="phase-pill"><div class="phase-dot"></div>Day '+dayInCycle+' of '+len+' &middot; '+phase.name+' phase</div>'
+    +(onPeriod?'<a href="https://a.co/d/0iNR0SiO" target="_blank" rel="noopener" style="display:inline-flex;align-items:center;gap:5px;background:rgba(255,255,255,0.2);border:1px solid rgba(255,255,255,0.35);border-radius:100px;padding:5px 11px;font-size:12px;font-weight:500;color:#fff;text-decoration:none;white-space:nowrap">🛒 Pads</a>':'')
+    +'</div>'
     +'</div></div>'
 
     +'<div class="card-strip">'
@@ -781,12 +812,6 @@ async function submitLog(action,iso) {
       modalMsg('Signal sent to Dan. 💜','ok');
       playSignalChime();
       setTimeout(()=>{ closeModal(); init(); },1500);
-    } else if(action==='period') {
-      // Rebuild modal fresh for supplies prompt
-      showModal('Period logged 🩸', 'Are you covered for feminine products?',
-        '<a href="https://a.co/d/0iNR0SiO" target="_blank" rel="noopener" class="mbtn primary" style="text-decoration:none;text-align:center;display:block">'
-        + '🛒 Order pads on Amazon</a>'
-        + '<button class="mbtn cancel" onclick="closeModal();init()">I&#39;m all set</button>');
     } else {
       setTimeout(()=>{ closeModal(); init(); },1500);
     }
