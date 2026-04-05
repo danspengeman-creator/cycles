@@ -169,6 +169,22 @@ const PHASES = [
     tips:["Magnesium can help ease PMS symptoms — leafy greens and dark chocolate.","Low-intensity movement like yoga or walking may lift your mood.","Extra sleep and avoiding overstimulation can make a real difference.","Be patient with yourself — these feelings are temporary and real."] }
 ];
 
+const PHASE_SEASON_NAMES = {
+  'Menstrual':   'Inner Winter',
+  'Follicular':  'Inner Spring',
+  'Ovulation':   'Inner Summer',
+  'Luteal':      'Inner Autumn',
+  'Late Luteal': 'Late Autumn'
+};
+
+const PHASE_ELEMENTS = {
+  'Menstrual':   { element: 'Water', archetype: 'The Crone', crystal: 'Amethyst', intention: 'What are you ready to release?' },
+  'Follicular':  { element: 'Air',   archetype: 'The Maiden', crystal: 'Citrine', intention: 'What new beginning excites you?' },
+  'Ovulation':   { element: 'Fire',  archetype: 'The Mother', crystal: 'Rose Quartz', intention: 'What do you want to create or share?' },
+  'Luteal':      { element: 'Earth', archetype: 'The Wild Woman', crystal: 'Labradorite', intention: 'What needs your honest attention?' },
+  'Late Luteal': { element: 'Earth', archetype: 'The Crone', crystal: 'Black Tourmaline', intention: 'What are you being called to let go of?' }
+};
+
 const PHASE_INFO = {
   period:     { emoji:"🌙", name:"Menstrual (Period)",  duration:"Days 1–5",           color:"#7B4F8E", bg:"#F0E6F7", how:"Hormone levels drop to their lowest point. You may feel tired, crampy, emotional or craving comfort and rest. It's completely normal to feel low-energy and want to be alone.", physical:"Cramping, bloating, lower back ache, tender breasts, fatigue, headaches.", tip:"Your body is doing a lot of work. Rest, warmth and gentle movement are your best friends right now." },
   follicular: { emoji:"🌸", name:"Follicular Phase",    duration:"Days 6–9 (approx)",  color:"#7A99B8", bg:"#EEF3F8", how:"Your period has ended and your body is quietly rebuilding. Estrogen begins to rise, energy starts returning and your mood gradually lifts. You may feel a sense of renewal and calm optimism.", physical:"Increasing energy, improved mood, reduced bloating, returning appetite, clearer skin.", tip:"A gentle transition phase — good for easing back into routines, light exercise and reconnecting with people." },
@@ -424,6 +440,85 @@ function getIrregularityCard(irregularity) {
     + '</div></div>';
 }
 
+
+// ── MONTHLY SUMMARY ──
+function buildMonthlySummary(periodDates, sexDates, signalDates, feelingsMap, len) {
+  if (periodDates.length < 2) return '';
+
+  // Check if we just started a new cycle — compare last two period dates
+  const lastISO = periodDates[periodDates.length - 1];
+  const prevISO = periodDates[periodDates.length - 2];
+  const storageKey = 'summarySeen_' + lastISO;
+  if (localStorage.getItem(storageKey)) return '';
+
+  // Calculate last cycle length
+  const lastCycleLen = Math.floor(
+    (parseISOLocal(lastISO) - parseISOLocal(prevISO)) / 86400000
+  );
+  if (lastCycleLen < 14 || lastCycleLen > 60) return '';
+
+  // Count intimacy and signals in last cycle
+  const cycleStart = parseISOLocal(prevISO);
+  const cycleEnd   = parseISOLocal(lastISO);
+
+  const intimacyCount = (sexDates || []).filter(d => {
+    const dt = parseISOLocal(d);
+    return dt && dt >= cycleStart && dt < cycleEnd;
+  }).length;
+
+  const signalCount = (signalDates || []).filter(d => {
+    const dt = parseISOLocal(d);
+    return dt && dt >= cycleStart && dt < cycleEnd;
+  }).length;
+
+  // Find most common feeling and best phase from feelingsMap
+  const phaseCounts = {};
+  const feelingCounts = {};
+  for (const [dateStr, feelings] of Object.entries(feelingsMap || {})) {
+    const d = parseISOLocal(dateStr);
+    if (!d || d < cycleStart || d >= cycleEnd) continue;
+    const daysSince = Math.floor((d - cycleStart) / 86400000);
+    const cycleDay = ((daysSince % lastCycleLen) + lastCycleLen) % lastCycleLen + 1;
+    const phase = getPhase(cycleDay, lastCycleLen);
+    phaseCounts[phase.name] = (phaseCounts[phase.name] || 0) + 1;
+    feelings.split(',').map(f => f.trim()).filter(Boolean).forEach(f => {
+      feelingCounts[f] = (feelingCounts[f] || 0) + 1;
+    });
+  }
+
+  const topPhase   = Object.entries(phaseCounts).sort((a,b) => b[1]-a[1])[0];
+  const topFeelings = Object.entries(feelingCounts).sort((a,b) => b[1]-a[1]).slice(0,2).map(([f]) => f);
+
+  const FEELING_EMOJIS = {
+    'Happy':'😊','Energized':'⚡','Calm':'😌','Affectionate':'🥰','Horny':'🔥',
+    'Neutral':'😐','Tired':'😴','Foggy / Low focus':'🧠','Stressed':'😮‍💨',
+    'Emotional':'😢','Irritable':'😠','Cramping':'🤕','Bloated':'🫠',
+    'Headachey':'🤯','Breast Tenderness':'🎀','Nauseous':'🤢'
+  };
+
+  let summary = 'Your last cycle was <strong>' + lastCycleLen + ' days</strong>.';
+  if (topPhase) summary += ' You logged the most feelings during your <strong>' + topPhase[0] + '</strong> phase.';
+  if (topFeelings.length) summary += ' Most reported: ' + topFeelings.map(f => (FEELING_EMOJIS[f]||'') + ' ' + f).join(' and ') + '.';
+  if (intimacyCount > 0) summary += ' You logged intimacy <strong>' + intimacyCount + ' time' + (intimacyCount !== 1 ? 's' : '') + '</strong>.';
+  if (signalCount > 0) summary += ' You sent <strong>' + signalCount + ' signal' + (signalCount !== 1 ? 's' : '') + '</strong> to Dan.';
+
+  return '<div class="insight-card" id="summary-card" style="border:1px solid var(--rose-lt);background:linear-gradient(135deg,#FEF0F4,#fff)">'
+    + '<div class="insight-header">'
+    + '<div class="insight-icon" style="background:#EBF6F1;font-size:1.2rem">🔄</div>'
+    + '<div><div class="insight-title" style="color:var(--rose)">New cycle started</div>'
+    + '<div class="insight-sub">Here&#39;s how last cycle went</div></div>'
+    + '<button onclick="dismissSummary(\'' + lastISO + '\')" style="margin-left:auto;background:none;border:none;font-size:18px;color:var(--ink-lt);cursor:pointer;padding:0 4px">&times;</button>'
+    + '</div>'
+    + '<div class="insight-body">' + summary + '</div>'
+    + '</div>';
+}
+
+function dismissSummary(lastISO) {
+  localStorage.setItem('summarySeen_' + lastISO, '1');
+  const el = document.getElementById('summary-card');
+  if (el) el.remove();
+}
+
 function render(periodDates,signalDates,symptomDates,feelingsMap,sexDates) {
   const today=new Date();
   const len=avgCycleLen(periodDates);
@@ -493,9 +588,10 @@ function render(periodDates,signalDates,symptomDates,feelingsMap,sexDates) {
     +banner
 
     +'<div class="section"><div class="section-title">How you\'re likely feeling</div>'
+    +(onPeriod?buildMonthlySummary(periodDates,sexDates,signalDates,feelingsMap,len):'')
     +'<div class="insight-card">'
     +'<div class="insight-header"><div class="insight-icon" style="background:'+phase.bg+';font-size:1.3rem">'+phase.emoji+'</div>'
-    +'<div><div class="insight-title">'+phase.name+' phase</div><div class="insight-sub">'+phase.tagline+'</div></div></div>'
+    +'<div><div class="insight-title">'+phase.name+' <span style="font-weight:400;color:var(--ink-lt);font-size:13px">['+PHASE_SEASON_NAMES[phase.name]+']</span></div><div class="insight-sub">'+phase.tagline+'</div></div></div>'
     +'<div class="insight-body">'+phase.body+'</div>'
     +'<div class="chips">'+phase.symptoms.map(s=>'<span class="chip">'+s+'</span>').join('')+'</div>'
     +getPreviousFeelings(phase.name, feelingsMap, periodDates, len)
