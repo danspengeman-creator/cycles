@@ -640,10 +640,10 @@ function render(periodDates,signalDates,symptomDates,feelingsMap,sexDates) {
     +'<div class="section"><div class="section-title">Your calendar</div>'
     +'<div class="cal-wrap"><div id="calContainer">'+buildCalendar(periodDates,signalDates,symptomDates,feelingsMap,sexDates,len,0)+'</div></div></div>'
 
-    +'<button class="log-btn" onclick="openLog()">🩸 Log period start</button>'
-    +'<button class="log-btn" onclick="openSymptom()" style="margin-top:0.75rem;background:linear-gradient(135deg,#5FA67A,#3d8a5e);">📝 Log a symptom</button>'
-    +'<button class="log-btn" onclick="openIntimacy()" style="margin-top:0.75rem;background:linear-gradient(135deg,#C45E8A,#E8678A);">😏 Log intimacy</button>'
-    +'<button class="signal-btn" onclick="openSignal()">💜 Send Dan a signal</button>'
+    +'<button class="log-btn" onclick="haptic(\'light\');openLog()">🩸 Log period start</button>'
+    +'<button class="log-btn" onclick="haptic(\'light\');openSymptom()" style="margin-top:0.75rem;background:linear-gradient(135deg,#5FA67A,#3d8a5e);">📝 Log a symptom</button>'
+    +'<button class="log-btn" onclick="haptic(\'light\');openIntimacy()" style="margin-top:0.75rem;background:linear-gradient(135deg,#C45E8A,#E8678A);">😏 Log intimacy</button>'
+    +'<button class="signal-btn" onclick="haptic(\'light\');openSignal()">💜 Send Dan a signal</button>'
     +'<div style="padding:1.5rem 1rem 0;font-size:11px;color:var(--ink-lt);text-align:center">Cycle data is private and stored only in a password-protected Google Sheet.</div>';
 }
 
@@ -713,7 +713,7 @@ function openLogForDate(iso) {
   const d=parseISOLocal(iso);
   const dateStr=d.toLocaleDateString('en-US',{weekday:'long',month:'long',day:'numeric'});
   showModal('Log period start', dateStr,
-    '<button class="mbtn primary" onclick="submitLog(\'period\',\''+iso+'\')">🩸 Yes, my period started</button>'
+    '<button class="mbtn primary" onclick="haptic(\'medium\');submitLog(\'period\',\''+iso+'\')">🩸 Yes, my period started</button>'
     +'<button class="mbtn cancel" onclick="closeModal()">Cancel</button>');
 }
 
@@ -882,6 +882,7 @@ async function submitIntimacy(iso) {
     await writeEntry('sex', iso);
     const comment = INTIMACY_COMMENTS[Math.floor(Math.random() * INTIMACY_COMMENTS.length)];
     modalMsg(comment, 'ok');
+    haptic('success');
     playSignalChime();
     setTimeout(() => { closeModal(); init(); }, 1800);
   } catch(e) {
@@ -942,6 +943,7 @@ async function submitLog(action,iso) {
 }
 
 function playSignalChime() {
+  haptic('signal');
   try {
     const ctx=new(window.AudioContext||window.webkitAudioContext)();
     [523.25,659.25,783.99,1046.50].forEach((freq,i)=>{
@@ -1035,6 +1037,17 @@ async function schedulePeriodReminders(daysUntil) {
   if (reminders.length) {
     reg.active.postMessage({ type: 'SCHEDULE_PERIOD_REMINDERS', reminders });
   }
+}
+
+
+// ── HAPTIC FEEDBACK ──
+function haptic(style) {
+  if (!navigator.vibrate) return;
+  if (style === 'light')   navigator.vibrate(10);
+  else if (style === 'medium') navigator.vibrate(25);
+  else if (style === 'success') navigator.vibrate([15, 50, 15]);
+  else if (style === 'signal') navigator.vibrate([10, 30, 10, 30, 20]);
+  else navigator.vibrate(15);
 }
 
 async function init() {
