@@ -125,6 +125,13 @@
     .desktop-shell { max-width:540px; margin:0 auto; background:var(--mist); min-height:100vh; box-shadow:0 0 60px rgba(44,32,53,0.15); }
   }
   .fadein { animation:fadeUp 0.4s ease both; }
+  .weather-card { background:var(--card-bg); border-radius:18px; padding:1.25rem; box-shadow:0 2px 16px rgba(44,32,53,0.07); border:1px solid var(--border); margin-bottom:0.75rem; }
+  .weather-header { display:flex; align-items:center; justify-content:space-between; margin-bottom:0.75rem; }
+  .weather-temp { font-family:'DM Serif Display',serif; font-size:2rem; color:var(--ink); line-height:1; }
+  .weather-desc { font-size:13px; color:var(--ink-lt); margin-top:2px; }
+  .weather-icon { font-size:2.5rem; }
+  .weather-tip { font-size:13px; color:var(--ink-mid); line-height:1.55; margin-bottom:0.5rem; padding:0.75rem 1rem; background:var(--mist); border-radius:12px; }
+  .weather-tip + .weather-tip { margin-top:6px; }
   @keyframes fadeUp { from{opacity:0;transform:translateY(8px)} to{opacity:1;transform:translateY(0)} }
 </style>
 </head>
@@ -637,6 +644,8 @@ function render(periodDates,signalDates,symptomDates,feelingsMap,sexDates) {
     +moonCycleHtml
     +'</div></div>'
 
+    +'<div class="section" id="weatherSection"><div class="section-title">Today\'s weather</div>'
+    +'<div id="weatherCard"><div class="insight-card" style="text-align:center;color:var(--ink-lt);font-size:13px">Fetching weather...</div></div></div>'
     +'<div class="section"><div class="section-title">Your calendar</div>'
     +'<div class="cal-wrap"><div id="calContainer">'+buildCalendar(periodDates,signalDates,symptomDates,feelingsMap,sexDates,len,0)+'</div></div></div>'
 
@@ -1050,6 +1059,134 @@ function haptic(style) {
   else navigator.vibrate(15);
 }
 
+
+// ── WEATHER ──
+const OWM_KEY = '6be68d479c99aafddb4ceeeaf83c0dfd';
+
+async function fetchWeather() {
+  return new Promise((resolve) => {
+    if (!navigator.geolocation) { resolve(null); return; }
+    navigator.geolocation.getCurrentPosition(
+      async (pos) => {
+        try {
+          const { latitude: lat, longitude: lon } = pos.coords;
+          const url = 'https://api.openweathermap.org/data/2.5/weather?lat=' + lat + '&lon=' + lon + '&units=imperial&appid=' + OWM_KEY;
+          const res = await fetch(url);
+          const data = await res.json();
+          resolve({
+            temp:     Math.round(data.main.temp),
+            feels:    Math.round(data.main.feels_like),
+            humidity: data.main.humidity,
+            desc:     data.weather[0].description,
+            id:       data.weather[0].id,
+            city:     data.name,
+            wind:     Math.round(data.wind.speed)
+          });
+        } catch(e) { resolve(null); }
+      },
+      () => resolve(null),
+      { timeout: 8000 }
+    );
+  });
+}
+
+function getWeatherEmoji(id, temp) {
+  if (id >= 200 && id < 300) return '⛈';
+  if (id >= 300 && id < 400) return '🌦';
+  if (id >= 500 && id < 600) return '🌧';
+  if (id >= 600 && id < 700) return '❄️';
+  if (id >= 700 && id < 800) return '🌫';
+  if (id === 800) return temp > 85 ? '☀️' : temp < 40 ? '🌨' : '☀️';
+  if (id === 801 || id === 802) return '⛅';
+  return '🌥';
+}
+
+function getSeason() {
+  const m = new Date().getMonth(); // 0-indexed
+  if (m >= 2 && m <= 4) return 'spring';
+  if (m >= 5 && m <= 7) return 'summer';
+  if (m >= 8 && m <= 10) return 'autumn';
+  return 'winter';
+}
+
+function buildWeatherCard(weather, phase) {
+  if (!weather) return '';
+
+  const season   = getSeason();
+  const isHot    = weather.temp >= 82;
+  const isCold   = weather.temp <= 40;
+  const isHumid  = weather.humidity >= 65;
+  const isWinter = season === 'winter';
+  const isSummer = season === 'summer';
+  const emoji    = getWeatherEmoji(weather.id, weather.temp);
+  const phaseName = phase.name;
+
+  // Build contextual insights based on weather + phase combo
+  const insights = [];
+  const tips = [];
+
+  // Temperature + cycle interaction
+  if (isHot && isHumid) {
+    insights.push('Heat and humidity are a notable combination today. High temperatures increase dehydration risk, raising vasopressin levels which can intensify cramping and bloating — something your body is already more prone to in the ' + phaseName + ' phase.');
+    tips.push('Drink 8–10 glasses of water today — dehydration directly worsens cramp intensity.');
+    tips.push('Electrolytes help your body retain the right fluid balance. Try coconut water or a pinch of sea salt in your water.');
+    if (isHumid) tips.push('High humidity amplifies fluid retention. Light, breathable clothing and cool environments will help.');
+  } else if (isHot) {
+    insights.push("Today's heat can increase dehydration, which raises vasopressin — a hormone that constricts blood vessels and can intensify uterine contractions. Stay ahead of it.");
+    tips.push('Keep water within reach all day. Even mild dehydration affects how cramps and bloating feel.');
+    tips.push('Avoid prolonged sun exposure, especially between 11am and 3pm.');
+  } else if (isCold) {
+    insights.push('Exposure to cold acts as a physical stressor that triggers cortisol release. Elevated cortisol can suppress the LH surge needed for ovulation, which may slightly shift your cycle timing.');
+    tips.push('Stay warm — especially your core and lower abdomen. A heating pad or warm layers can reduce the cortisol response.');
+    tips.push('Warm herbal teas (ginger, chamomile) support circulation and ease tension.');
+  }
+
+  // Winter-specific: Vitamin D and cycle length
+  if (isWinter) {
+    insights.push('Winter months mean less sunlight, which lowers Vitamin D — a pro-hormone essential for estrogen and progesterone production. This can lead to slightly longer cycles or worsened PMS symptoms like mood swings and fatigue.');
+    tips.push('Consider a Vitamin D supplement during winter months. Even 1,000–2,000 IU daily can make a meaningful difference.');
+    tips.push('Get outside for at least 15–20 minutes of natural light each day, even on cloudy days.');
+  }
+
+  // Summer-specific: hydration and inflammation
+  if (isSummer && !isHot) {
+    tips.push('Even on milder summer days, heat builds up through the day. Stay ahead of hydration.');
+  }
+
+  // Humidity alone
+  if (isHumid && !isHot) {
+    insights.push("Today's humidity can interfere with your body's ability to regulate temperature, increasing systemic inflammation. If you're in a phase where bloating is common, the humidity may make it feel more pronounced.");
+    tips.push('Reducing sodium intake today can help minimize fluid retention.');
+  }
+
+  // Fallback if nothing specific triggered
+  if (!insights.length) {
+    insights.push("Today's conditions are fairly mild. Your body won't have to work overtime to regulate temperature, which is good news for your cycle — less environmental stress means more stable hormonal rhythms.");
+    tips.push('Mild weather is a good day for a walk or gentle movement, which supports circulation and mood.');
+  }
+
+  const insightHtml = insights.map(i =>
+    '<div class="insight-body" style="margin-bottom:0.6rem">' + i + '</div>'
+  ).join('');
+
+  const tipsHtml = tips.map(t =>
+    '<div class="weather-tip">💡 ' + t + '</div>'
+  ).join('');
+
+  return '<div class="weather-card">'
+    + '<div class="weather-header">'
+    + '<div>'
+    + '<div style="font-size:1.6rem;font-family:\'DM Serif Display\',serif;color:var(--ink)">' + weather.temp + '°F</div>'
+    + '<div style="font-size:13px;color:var(--ink-lt);margin-top:2px;text-transform:capitalize">' + weather.desc + ' · ' + weather.city + '</div>'
+    + '<div style="font-size:12px;color:var(--ink-lt);margin-top:1px">Feels like ' + weather.feels + '°F · Humidity ' + weather.humidity + '%</div>'
+    + '</div>'
+    + '<div style="font-size:2.5rem">' + emoji + '</div>'
+    + '</div>'
+    + insightHtml
+    + tipsHtml
+    + '</div>';
+}
+
 async function init() {
   calOffset=0;
   closeModal();
@@ -1057,6 +1194,13 @@ async function init() {
   document.getElementById('app').innerHTML='<div class="loading-wrap"><div class="spinner"></div>Loading your cycle data...</div>';
   const {periodDates,signalDates,symptomDates,feelingsMap,sexDates}=await fetchData();
   render(periodDates,signalDates,symptomDates,feelingsMap,sexDates);
+  // Load weather after render so page isn't blocked
+  fetchWeather().then(weather => {
+    const card = document.getElementById('weatherCard');
+    if (!card) return;
+    const phase = appState ? getPhase((Math.floor((new Date()-parseISOLocal(appState.periodDates[appState.periodDates.length-1]))/86400000)%appState.len)+1, appState.len) : PHASES[3];
+    card.innerHTML = weather ? buildWeatherCard(weather, phase) : '<div class="insight-card" style="text-align:center;color:var(--ink-lt);font-size:13px">Weather unavailable — location access needed.</div>';
+  });
 }
 init();
 </script>
