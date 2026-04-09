@@ -1120,51 +1120,89 @@ function buildWeatherCard(weather, phase) {
   const isHumid  = weather.humidity >= 65;
   const isWinter = season === 'winter';
   const isSummer = season === 'summer';
+  const showContent = isHot || isCold || isHumid || isWinter || isSummer;
   const emoji    = getWeatherEmoji(weather.id, weather.temp);
-  const phaseName = phase.name;
+  const p        = phase.name;
 
-  // Build contextual insights based on weather + phase combo
   const insights = [];
-  const tips = [];
+  const tips     = [];
 
-  // Temperature + cycle interaction
-  if (isHot && isHumid) {
-    insights.push('Heat and humidity are a notable combination today. High temperatures increase dehydration risk, raising vasopressin levels which can intensify cramping and bloating — something your body is already more prone to in the ' + phaseName + ' phase.');
-    tips.push('Drink 8–10 glasses of water today — dehydration directly worsens cramp intensity.');
-    tips.push('Electrolytes help your body retain the right fluid balance. Try coconut water or a pinch of sea salt in your water.');
-    if (isHumid) tips.push('High humidity amplifies fluid retention. Light, breathable clothing and cool environments will help.');
-  } else if (isHot) {
-    insights.push("Today's heat can increase dehydration, which raises vasopressin — a hormone that constricts blood vessels and can intensify uterine contractions. Stay ahead of it.");
-    tips.push('Keep water within reach all day. Even mild dehydration affects how cramps and bloating feel.');
-    tips.push('Avoid prolonged sun exposure, especially between 11am and 3pm.');
-  } else if (isCold) {
-    insights.push('Exposure to cold acts as a physical stressor that triggers cortisol release. Elevated cortisol can suppress the LH surge needed for ovulation, which may slightly shift your cycle timing.');
-    tips.push('Stay warm — especially your core and lower abdomen. A heating pad or warm layers can reduce the cortisol response.');
-    tips.push('Warm herbal teas (ginger, chamomile) support circulation and ease tension.');
-  }
+  if (showContent) {
+    // Hot + humid
+    if (isHot && isHumid) {
+      if (p === 'Menstrual' || p === 'Late Luteal') {
+        insights.push('Heat and humidity combined with your ' + p + ' phase is a tough pairing. Vasopressin triggered by dehydration constricts blood vessels, which can significantly intensify cramping and bloating you may already be feeling.');
+        tips.push('Drink 8–10 glasses of water today — dehydration directly worsens cramp intensity.');
+        tips.push('Electrolytes (coconut water, pinch of sea salt) help your body retain the right fluid balance.');
+      } else if (p === 'Ovulation') {
+        insights.push("You're in your peak phase and today's heat and humidity could work against you. Dehydration reduces blood volume and can dull the natural energy boost ovulation brings.");
+        tips.push('Stay well hydrated to keep your energy and mood at their natural peak today.');
+        tips.push('Light, breathable clothing will help your body stay cool and your mood stay lifted.');
+      } else if (p === 'Luteal') {
+        insights.push("Your body is already prone to fluid retention in the Luteal phase. Today's humidity amplifies that sensation significantly — bloating may feel more pronounced than usual.");
+        tips.push('Reduce sodium intake today to minimize fluid retention.');
+        tips.push('Cool, shaded environments and light movement will help more than staying still.');
+      } else {
+        insights.push("Today's heat and humidity increase dehydration risk. Even in your Follicular phase, staying hydrated protects the hormonal balance your body is building right now.");
+        tips.push('Keep water within reach all day and aim for 8+ glasses.');
+      }
+    // Hot only
+    } else if (isHot) {
+      if (p === 'Menstrual') {
+        insights.push("Heat dehydrates you faster during your period. Reduced blood volume from dehydration raises vasopressin, which can make cramps noticeably more intense.");
+        tips.push('Prioritize water and cool environments today. A heating pad indoors is fine but avoid prolonged outdoor heat.');
+      } else if (p === 'Ovulation') {
+        insights.push("Today's heat could slightly dull your natural ovulation energy peak if you're not hydrated. Your body is doing a lot right now — support it.");
+        tips.push('Stay ahead of hydration. Even mild dehydration affects mood, energy and libido.');
+      } else if (p === 'Late Luteal') {
+        insights.push("Heat during PMS raises cortisol, which is already elevated in this phase. That combination can amplify irritability and emotional sensitivity.");
+        tips.push('Cool, calm environments will help regulate your nervous system today.');
+        tips.push('Avoid caffeine — it compounds the cortisol and heat effect on your mood.');
+      } else {
+        insights.push("Today's heat increases dehydration risk. Staying hydrated supports stable hormone levels throughout your cycle.");
+        tips.push('Drink consistently through the day — don\'t wait until you feel thirsty.');
+      }
+    // Cold only
+    } else if (isCold) {
+      if (p === 'Ovulation' || p === 'Follicular') {
+        insights.push("Cold acts as a physical stressor and raises cortisol, which can suppress the LH surge your body needs for ovulation. In your " + p + " phase, staying warm directly supports your cycle timing.");
+        tips.push('Keep your core and lower abdomen warm — layers and a hot water bottle help reduce the cortisol stress response.');
+        tips.push('Warm ginger or chamomile tea supports circulation and helps your body stay in a calm, regulated state.');
+      } else if (p === 'Menstrual') {
+        insights.push("Cold temperatures constrict blood vessels, which during your period can increase cramping. Your uterus is already contracting — adding vasoconstriction from cold doesn't help.");
+        tips.push('Stay warm today. A heating pad on your lower abdomen is especially beneficial right now.');
+        tips.push('Warm soups and herbal teas are your best friends in cold weather during your period.');
+      } else {
+        insights.push("Prolonged cold triggers cortisol release as your body works to maintain temperature. This low-level stress can subtly affect hormone balance over time.");
+        tips.push('Dress in warm layers and limit extended cold exposure when possible.');
+      }
+    // Humid only
+    } else if (isHumid) {
+      if (p === 'Luteal' || p === 'Late Luteal') {
+        insights.push("Humidity interferes with your body's ability to cool itself through sweat, increasing systemic inflammation. Combined with your " + p + " phase — where fluid retention is already common — bloating may feel significantly more burdensome today.");
+        tips.push('Reduce sodium intake today to minimize additional fluid retention.');
+        tips.push('Light, breathable fabrics and a cool environment will help your body regulate better.');
+      } else {
+        insights.push("Today's humidity can increase the sensation of heaviness and inflammation. While less impactful outside of PMS phases, staying hydrated keeps your body managing it well.");
+        tips.push('Hydration helps your body process excess fluid. Aim for consistent water intake today.');
+      }
+    }
 
-  // Winter-specific: Vitamin D and cycle length
-  if (isWinter) {
-    insights.push('Winter months mean less sunlight, which lowers Vitamin D — a pro-hormone essential for estrogen and progesterone production. This can lead to slightly longer cycles or worsened PMS symptoms like mood swings and fatigue.');
-    tips.push('Consider a Vitamin D supplement during winter months. Even 1,000–2,000 IU daily can make a meaningful difference.');
-    tips.push('Get outside for at least 15–20 minutes of natural light each day, even on cloudy days.');
-  }
+    // Winter overlay — add only if not already showing cold tips
+    if (isWinter && !isCold) {
+      if (p === 'Luteal' || p === 'Late Luteal') {
+        insights.push('Winter months reduce Vitamin D, which is essential for progesterone production. In your ' + p + ' phase, low Vitamin D can worsen mood swings, fatigue and PMS symptoms.');
+      } else {
+        insights.push('Reduced winter sunlight lowers Vitamin D — a key hormone for estrogen and progesterone production. This can slightly lengthen cycles or amplify emotional symptoms.');
+      }
+      tips.push('A daily Vitamin D supplement (1,000–2,000 IU) during winter months supports hormonal balance.');
+      tips.push('Get outside for 15\u201320 minutes of natural light each day, even when it\'s overcast.');
+    }
 
-  // Summer-specific: hydration and inflammation
-  if (isSummer && !isHot) {
-    tips.push('Even on milder summer days, heat builds up through the day. Stay ahead of hydration.');
-  }
-
-  // Humidity alone
-  if (isHumid && !isHot) {
-    insights.push("Today's humidity can interfere with your body's ability to regulate temperature, increasing systemic inflammation. If you're in a phase where bloating is common, the humidity may make it feel more pronounced.");
-    tips.push('Reducing sodium intake today can help minimize fluid retention.');
-  }
-
-  // Fallback if nothing specific triggered
-  if (!insights.length) {
-    insights.push("Today's conditions are fairly mild. Your body won't have to work overtime to regulate temperature, which is good news for your cycle — less environmental stress means more stable hormonal rhythms.");
-    tips.push('Mild weather is a good day for a walk or gentle movement, which supports circulation and mood.');
+    // Summer overlay — mild summer days
+    if (isSummer && !isHot) {
+      tips.push('Even on milder summer days, heat builds gradually. Stay ahead of hydration throughout the day.');
+    }
   }
 
   const insightHtml = insights.map(i =>
