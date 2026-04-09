@@ -93,7 +93,7 @@
   .cal-day.ovulation  { background:var(--rose-lt); color:var(--rose); font-weight:600; }
   .cal-day.luteal     { background:var(--sage-lt); color:var(--sage); }
   .cal-day.pms        { background:var(--blue-lt); color:var(--blue); }
-  .cal-day.signal::after   { content:'💜'; font-size:9px; position:absolute; bottom:2px; right:2px; }
+  .cal-day.signal::after   { content:'💜'; font-size:11px; position:absolute; bottom:3px; right:3px; }
   .cal-day.symptom { position:relative; }
   .cal-legend { display:flex; flex-wrap:wrap; gap:7px; margin-top:0.85rem; justify-content:center; }
   .leg-chip   { font-size:12px; font-weight:500; padding:5px 11px; border-radius:100px; cursor:pointer; transition:transform 0.1s,opacity 0.1s; user-select:none; }
@@ -342,8 +342,8 @@ function buildCalendar(periodDates,signalDates,symptomDates,feelingsMap,sexDates
   for (let day=1;day<=daysInMonth;day++) {
     const iso=year+'-'+String(month+1).padStart(2,'0')+'-'+String(day).padStart(2,'0');
     const pc=getDayClass(iso), it=iso===todayISO?' today':'', sg=signalSet.has(iso)?' signal':'', sy=symptomSet.has(iso)?' symptom':'';
-    const symEmoji=symptomSet.has(iso)?'<span style="font-size:8px;position:absolute;top:1px;left:2px;line-height:1">'+getSymptomEmoji(iso)+'</span>':'';
-    const sexEmoji=sexSet.has(iso)?'<span style="font-size:8px;position:absolute;bottom:1px;left:2px;line-height:1">😏</span>':'';
+    const symEmoji=symptomSet.has(iso)?'<span style="font-size:11px;position:absolute;top:3px;left:3px;line-height:1">'+getSymptomEmoji(iso)+'</span>':'';
+    const sexEmoji=sexSet.has(iso)?'<span style="font-size:11px;position:absolute;bottom:3px;left:3px;line-height:1">😏</span>':'';
     h+='<div class="cal-day'+(pc?' '+pc:'')+it+sg+sy+'" onclick="tapDay(\''+iso+'\')">'+day+symEmoji+sexEmoji+'</div>';
   }
   h+='</div><div class="cal-legend">'
