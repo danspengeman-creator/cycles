@@ -820,7 +820,7 @@ function openSymptom(isoOverride) {
         }).join('')
       + '</div>'
       + '<button onclick="openCustomNote()" style="width:100%;padding:13px 8px;border-radius:14px;border:1px solid var(--border);background:var(--mist);color:var(--ink-mid);font-family:\'DM Sans\',sans-serif;font-size:14px;cursor:pointer;text-align:center;margin-bottom:0;display:block">'+(customNote?'📝 Note: '+customNote:'📝 Add a custom note')+'</button>'
-      + '<button class="mbtn primary" onclick="submitSymptom(\''+iso+'\')" '+(selected.size===0?'style="opacity:0.4;pointer-events:none"':'')
+      + '<button class="mbtn primary" onclick="submitSymptom(\''+iso+'\')" '+(selected.size===0&&!customNote?'style="opacity:0.4;pointer-events:none"':'')
       +'>📝 Save '+(selected.size>0?selected.size+' feeling'+(selected.size>1?'s':''):'feelings')+'</button>'
       + '<button class="mbtn cancel" onclick="closeModal()" style="margin-top:6px">Cancel</button>';
   }
