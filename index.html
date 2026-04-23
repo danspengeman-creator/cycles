@@ -680,6 +680,7 @@ function tapDay(iso) {
 
   const hasSignal  = signalDates.includes(iso);
   const hasSymptom = symptomDates.includes(iso);
+  const hasIntimacy = (appState.sexDates || []).includes(iso);
   const isToday    = iso === toISO(new Date());
   const isFuture   = d > new Date();
 
@@ -692,6 +693,11 @@ function tapDay(iso) {
   // Signal indicator
   if (hasSignal) {
     body += '<div style="background:#F0E8F8;border-radius:12px;padding:0.75rem 1rem;margin-bottom:10px;font-size:13px;color:var(--plum)">💜 Signal sent to Dan on this day.</div>';
+  }
+
+  // Intimacy indicator
+  if (hasIntimacy) {
+    body += '<div style="background:#FFF0F6;border-radius:12px;padding:0.75rem 1rem;margin-bottom:10px;font-size:13px;color:#C45E8A">😏 Intimacy logged on this day.</div>';
   }
 
   // Symptom indicator — feelings pulled from sheet via appState.feelingsMap
