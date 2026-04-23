@@ -482,6 +482,12 @@ function buildMonthlySummary(periodDates, sexDates, signalDates, feelingsMap, le
   const storageKey = 'summarySeen_' + lastISO;
   if (localStorage.getItem(storageKey)) return '';
 
+  // Only show if the last period was logged within the past 5 days
+  // (meaning she actually just logged it, not a historical entry)
+  const lastPeriodDate = parseISOLocal(lastISO);
+  const daysSinceLogged = Math.floor((new Date() - lastPeriodDate) / 86400000);
+  if (daysSinceLogged > 5) return '';
+
   // Calculate last cycle length
   const lastCycleLen = Math.floor(
     (parseISOLocal(lastISO) - parseISOLocal(prevISO)) / 86400000
@@ -559,6 +565,9 @@ function render(periodDates,signalDates,symptomDates,feelingsMap,sexDates) {
   const phase=getPhase(dayInCycle,len);
   const tip=getDayTip(phase);
   const onPeriod=phase.name==="Menstrual";
+  // Only treat as confirmed period if she actually logged one recently
+  const daysSinceLastLogged = Math.floor((new Date() - parseISOLocal(periodDates[periodDates.length-1])) / 86400000);
+  const periodConfirmed = onPeriod && daysSinceLastLogged <= 6;
   // Determine header phase class — check fertile window separately
   const ovDay = Math.round(len * PHASES[2].maxPct);
   const isFertileWindow = !onPeriod && dayInCycle >= ovDay - 5 && dayInCycle < ovDay - 2;
@@ -597,15 +606,15 @@ function render(periodDates,signalDates,symptomDates,feelingsMap,sexDates) {
 
   // Banner
   let banner='';
-  if (rawDaysSince>len+2&&!onPeriod) banner='<div class="banner fadein" style="background:#F0E6F7;border:1px solid #DCC8E8;"><div class="banner-icon">📋</div><div><div class="banner-title" style="color:var(--plum)">Period might be overdue</div><div class="banner-body" style="color:var(--ink-mid)">It\'s been '+rawDaysSince+' days. Has your period started? Tap "Log period start" below to record it.</div></div></div>';
-  else if (nextPeriodDay<=3&&!onPeriod) banner='<div class="banner fadein" style="background:var(--blue-lt);border:1px solid #B8D4EE;"><div class="banner-icon">🗓</div><div><div class="banner-title" style="color:var(--blue)">Period arriving soon</div><div class="banner-body" style="color:var(--ink-mid)">Expected in '+nextPeriodDay+' day'+(nextPeriodDay!==1?'s':'')+' around '+nextPeriodStr+'.</div><div class="banner-body" style="color:var(--ink-mid);margin-top:4px">Need any feminine products? The link is on this page.</div></div></div>';
+  if (rawDaysSince>len+2&&!periodConfirmed) banner='<div class="banner fadein" style="background:#F0E6F7;border:1px solid #DCC8E8;"><div class="banner-icon">📋</div><div><div class="banner-title" style="color:var(--plum)">Period might be overdue</div><div class="banner-body" style="color:var(--ink-mid)">It\'s been '+rawDaysSince+' days. Has your period started? Tap "Log period start" below to record it.</div></div></div>';
+  else if (nextPeriodDay<=3&&!periodConfirmed) banner='<div class="banner fadein" style="background:var(--blue-lt);border:1px solid #B8D4EE;"><div class="banner-icon">🗓</div><div><div class="banner-title" style="color:var(--blue)">Period arriving soon</div><div class="banner-body" style="color:var(--ink-mid)">Expected in '+nextPeriodDay+' day'+(nextPeriodDay!==1?'s':'')+' around '+nextPeriodStr+'.</div><div class="banner-body" style="color:var(--ink-mid);margin-top:4px">Need any feminine products? The link is on this page.</div></div></div>';
 
   document.getElementById('app').innerHTML=
     '<div class="header '+phaseHeaderClass+'" ><div class="header-inner">'
     +'<div class="header-greeting">'+phase.emoji+' <em>'+phase.greeting+'</em></div>'
     +'<div style="display:flex;align-items:center;justify-content:space-between;gap:8px">'
     +'<div class="phase-pill"><div class="phase-dot"></div>Day '+dayInCycle+' of '+len+' &middot; '+phase.name+' phase</div>'
-    +((onPeriod||nextPeriodDay<=3)?'<a href="https://a.co/d/0iNR0SiO" target="_blank" rel="noopener" style="display:inline-flex;align-items:center;gap:5px;background:#FF9900;border:1px solid #e68a00;border-radius:100px;padding:5px 11px;font-size:12px;font-weight:700;color:#000;text-decoration:none;white-space:nowrap">🛒 Need Pads?</a>':'')
+    +((periodConfirmed||nextPeriodDay<=3)?'<a href="https://a.co/d/0iNR0SiO" target="_blank" rel="noopener" style="display:inline-flex;align-items:center;gap:5px;background:#FF9900;border:1px solid #e68a00;border-radius:100px;padding:5px 11px;font-size:12px;font-weight:700;color:#000;text-decoration:none;white-space:nowrap">🛒 Need Pads?</a>':'')
     +'</div>'
     +'</div></div>'
 
@@ -619,7 +628,7 @@ function render(periodDates,signalDates,symptomDates,feelingsMap,sexDates) {
     +banner
 
     +'<div class="section"><div class="section-title">How you\'re likely feeling</div>'
-    +(onPeriod?buildMonthlySummary(periodDates,sexDates,signalDates,feelingsMap,len):'')
+    +(periodConfirmed?buildMonthlySummary(periodDates,sexDates,signalDates,feelingsMap,len):'')
     +'<div class="insight-card">'
     +'<div class="insight-header"><div class="insight-icon" style="background:'+phase.bg+';font-size:1.3rem">'+phase.emoji+'</div>'
     +'<div><div class="insight-title">'+phase.name+' <span style="font-weight:400;color:var(--ink-lt);font-size:13px">['+PHASE_SEASON_NAMES[phase.name]+']</span></div><div class="insight-sub">'+phase.tagline+'</div></div></div>'
