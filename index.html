@@ -318,14 +318,21 @@ function buildCalendar(periodDates,signalDates,symptomDates,feelingsMap,sexDates
     return '📝';
   }
 
+  // Today reference for capping past vs projecting future
+  const todayForCap = new Date(); todayForCap.setHours(0,0,0,0);
+  const rawDaysToday = Math.floor((todayForCap - lastPeriod) / 86400000);
+
   function getDayClass(iso) {
     const d=parseISOLocal(iso);
     const daysSinceLast=Math.floor((d-lastPeriod)/86400000);
     if (daysSinceLast<0) { for (const pd of periodDates) { const p=parseISOLocal(pd); const diff=Math.floor((d-p)/86400000); if(diff>=0&&diff<=4) return 'period'; } return 'follicular'; }
-    const cycleDay=Math.min(daysSinceLast+1, len);
     const ovulationDay=Math.round(len*PHASES[2].maxPct);
+    // Past/today: cap at len so it stays in PMS until period is logged
+    // Future: use modulo to project cycles forward up to 6 cycles
+    const isPastOrToday = daysSinceLast <= rawDaysToday;
+    const cycleDay = isPastOrToday ? Math.min(daysSinceLast+1, len) : (daysSinceLast % len) + 1;
     if (cycleDay<=5) return 'period';
-    if (cycleDay>=ovulationDay-2&&cycleDay<=ovulationDay) return 'ovulation'; // 3-day ovulation window
+    if (cycleDay>=ovulationDay-2&&cycleDay<=ovulationDay) return 'ovulation';
     if (cycleDay>=ovulationDay-5&&cycleDay<ovulationDay-2) return 'fertile';
     const pct=cycleDay/len;
     if (pct<=PHASES[1].maxPct) return 'follicular';
