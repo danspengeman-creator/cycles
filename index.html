@@ -1372,6 +1372,8 @@ async function init() {
   registerServiceWorker();
   document.getElementById('app').innerHTML='<div class="loading-wrap"><div class="spinner"></div>Loading your cycle data...</div>';
   const {periodDates,signalDates,symptomDates,feelingsMap,sexDates,periodEndDates}=await fetchData();
+  console.log('DEBUG periodDates:', JSON.stringify(periodDates));
+  console.log('DEBUG avgCycleLen:', avgCycleLen(periodDates));
   render(periodDates,signalDates,symptomDates,feelingsMap,sexDates,periodEndDates);
   // Load weather after render so page isn't blocked
   fetchWeather().then(weather => {
