@@ -143,7 +143,7 @@
 </div>
 <!-- modal injected dynamically -->
 <script>
-const APP_VERSION = 'v1.0';
+const APP_VERSION = 'v1.1';
 const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbzSehW-_n2VdUQCtm-tyiAKSRr-NzUGAg23bVakhmXllduedpt1ZYA69J9gXl0CLrVT/exec";
 const PERIOD_DATES_FB = ["2025-07-02","2025-07-30","2025-08-23","2025-09-20","2025-10-16","2025-11-10","2025-12-09","2026-01-02","2026-01-28","2026-02-23","2026-03-26"];
 const SIGNAL_DATES_FB = [];
@@ -321,12 +321,8 @@ function buildCalendar(periodDates,signalDates,symptomDates,feelingsMap,sexDates
     return '📝';
   }
 
-  // Compute cycle anchor: start of current projected cycle
+  // Reference point: today, used to decide capped-current vs projected-future
   const todayForCap = new Date(); todayForCap.setHours(0,0,0,0);
-  const rawDaysToday = Math.floor((todayForCap - lastPeriod) / 86400000);
-  const cyclesElapsed = Math.floor(rawDaysToday / len);
-  // Anchor is the start of the current projected cycle (capped — no wrap until period logged)
-  const cycleAnchor = new Date(lastPeriod.getTime() + cyclesElapsed * len * 86400000);
 
   function getDayClass(iso) {
     const d = parseISOLocal(iso);
@@ -394,16 +390,22 @@ function buildCalendar(periodDates,signalDates,symptomDates,feelingsMap,sexDates
       return 'follicular';
     }
 
-    // For today and past since last period: use cycle anchor logic
-    // For future: project using modulo from cycle anchor
+    // Today and all past days since last logged period: cap at len.
+    // This keeps her in PMS (or wherever the capped day lands) for as long
+    // as she's overdue, no matter how many cycles' worth of days have passed,
+    // until she actually logs a new period.
+    //
+    // Only days strictly AFTER today get projected forward with modulo math,
+    // and that projection starts counting from the day immediately after
+    // today's capped position, so the future picks up exactly where "today"
+    // left off instead of jumping ahead a full cycle.
     let cycD;
-    if (d < cycleAnchor) {
-      // Between last period and cycle anchor: use raw days since last period
+    if (d <= todayForCap) {
       cycD = Math.min(daysSinceLastPeriod + 1, len);
     } else {
-      // From cycle anchor onward: project forward using modulo
-      const daysSinceAnchor = Math.floor((d - cycleAnchor) / 86400000);
-      cycD = (daysSinceAnchor % len) + 1;
+      const todayCycD = Math.min(Math.floor((todayForCap - lastPeriod) / 86400000) + 1, len);
+      const daysAfterToday = Math.floor((d - todayForCap) / 86400000);
+      cycD = ((todayCycD - 1 + daysAfterToday) % len) + 1;
     }
 
     // Use logged end date for current cycle if available
