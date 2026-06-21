@@ -143,7 +143,7 @@
 </div>
 <!-- modal injected dynamically -->
 <script>
-const APP_VERSION = 'v1.5';
+const APP_VERSION = 'v1.6';
 const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbzSehW-_n2VdUQCtm-tyiAKSRr-NzUGAg23bVakhmXllduedpt1ZYA69J9gXl0CLrVT/exec";
 const PERIOD_DATES_FB = ["2025-07-02","2025-07-30","2025-08-23","2025-09-20","2025-10-16","2025-11-10","2025-12-09","2026-01-02","2026-01-28","2026-02-23","2026-03-26"];
 const SIGNAL_DATES_FB = [];
@@ -307,17 +307,9 @@ function buildCalendar(periodDates,signalDates,symptomDates,feelingsMap,sexDates
   const symptomSet=new Set(symptomDates);
   const sexSet=new Set(sexDates||[]);
   const periodEndSet=new Set(periodEndDates||[]);
-  const FEELING_PRIORITY = ['Horny','Affectionate','Bloated','Cramping','Emotional','Tired','Happy'];
   function getSymptomEmoji(iso) {
-    const raw = feelingsMap && feelingsMap[iso];
-    if (!raw) return '📝';
-    const logged = raw.split(',').map(s => s.trim());
-    for (const f of FEELING_PRIORITY) {
-      if (logged.includes(f)) {
-        const match = [{emoji:'🔥',label:'Horny'},{emoji:'🥰',label:'Affectionate'},{emoji:'🫠',label:'Bloated'},{emoji:'🤕',label:'Cramping'},{emoji:'😢',label:'Emotional'},{emoji:'😴',label:'Tired'},{emoji:'😊',label:'Happy'}].find(x=>x.label===f);
-        if (match) return match.emoji;
-      }
-    }
+    // Simple notepad indicator, regardless of which specific feelings were
+    // logged that day. Tapping the day or opening My Notes shows the detail.
     return '📝';
   }
 
