@@ -143,7 +143,7 @@
 </div>
 <!-- modal injected dynamically -->
 <script>
-const APP_VERSION = 'v1.4';
+const APP_VERSION = 'v1.5';
 const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbzSehW-_n2VdUQCtm-tyiAKSRr-NzUGAg23bVakhmXllduedpt1ZYA69J9gXl0CLrVT/exec";
 const PERIOD_DATES_FB = ["2025-07-02","2025-07-30","2025-08-23","2025-09-20","2025-10-16","2025-11-10","2025-12-09","2026-01-02","2026-01-28","2026-02-23","2026-03-26"];
 const SIGNAL_DATES_FB = [];
@@ -912,17 +912,14 @@ function openSymptomForDate(iso) { openSymptom(iso); }
 function openSymptom(isoOverride) {
   const iso = isoOverride || toISO(new Date());
   let selected = new Set();
-  let customNote = '';
 
-  window.openCustomNote = function() {
-    const input = prompt('Add a note for today:', customNote);
-    if (input !== null) {
-      customNote = input.trim();
-      renderFeelings();
-    }
-  };
+  function getNoteValue() {
+    const el = document.getElementById('customNoteInput');
+    return el ? el.value.trim() : '';
+  }
 
   function renderFeelings() {
+    const existingNote = getNoteValue();
     document.getElementById('modal-btns').innerHTML =
       '<div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:12px">'
       + FEELINGS.map(f => {
@@ -936,11 +933,27 @@ function openSymptom(isoOverride) {
             +f.emoji+'<br><span style="font-size:13px">'+f.label+'</span></button>';
         }).join('')
       + '</div>'
-      + '<button onclick="openCustomNote()" style="width:100%;padding:13px 8px;border-radius:14px;border:1px solid var(--border);background:var(--mist);color:var(--ink-mid);font-family:\'DM Sans\',sans-serif;font-size:14px;cursor:pointer;text-align:center;margin-bottom:0;display:block">'+(customNote?'📝 Note: '+customNote:'📝 Add a custom note')+'</button>'
-      + '<button class="mbtn primary" onclick="submitSymptom(\''+iso+'\')" '+(selected.size===0&&!customNote?'style="opacity:0.4;pointer-events:none"':'')
-      +'>📝 Save '+(selected.size>0?selected.size+' feeling'+(selected.size>1?'s':''):'feelings')+'</button>'
+      + '<textarea id="customNoteInput" placeholder="Add a custom note (optional)" oninput="onNoteInput()" style="width:100%;min-height:64px;padding:12px;border-radius:14px;border:1px solid var(--border);background:var(--mist);color:var(--ink);font-family:\'DM Sans\',sans-serif;font-size:14px;resize:vertical;margin-bottom:10px;box-sizing:border-box;">' + existingNote + '</textarea>'
+      + '<button class="mbtn primary" id="symptomSaveBtn" onclick="submitSymptom(\''+iso+'\')" '+(selected.size===0&&!existingNote?'style="opacity:0.4;pointer-events:none"':'')
+      +'>📝 Save '+(selected.size>0?selected.size+' feeling'+(selected.size>1?'s':''):'note')+'</button>'
       + '<button class="mbtn cancel" onclick="closeModal()" style="margin-top:6px">Cancel</button>';
+    // Restore cursor focus and position if the textarea is being re-rendered while typing in feelings
+    const ta = document.getElementById('customNoteInput');
+    if (ta) ta.value = existingNote;
   }
+
+  window.onNoteInput = function() {
+    // Only toggle the save button's enabled state without a full re-render,
+    // so typing in the textarea doesn't lose focus or cursor position.
+    const note = getNoteValue();
+    const btn = document.getElementById('symptomSaveBtn');
+    if (btn) {
+      const shouldEnable = selected.size > 0 || !!note;
+      btn.style.opacity = shouldEnable ? '1' : '0.4';
+      btn.style.pointerEvents = shouldEnable ? 'auto' : 'none';
+      btn.textContent = '📝 Save ' + (selected.size > 0 ? selected.size + ' feeling' + (selected.size > 1 ? 's' : '') : 'note');
+    }
+  };
 
   window.toggleFeeling = function(label) {
     if (selected.has(label)) selected.delete(label); else selected.add(label);
@@ -948,11 +961,12 @@ function openSymptom(isoOverride) {
   };
   window.submitSymptom = async function(iso) {
     const feelings = Array.from(selected).join(', ');
+    const noteVal = getNoteValue();
     const btns=document.getElementById('modal-btns');
     if(btns){btns.style.opacity='0.5';btns.style.pointerEvents='none';}
     modalMsg('Saving...');
     try {
-      const fullEntry = feelings + (customNote ? ' | Note: ' + customNote : '');
+      const fullEntry = feelings + (noteVal ? ' | Note: ' + noteVal : '');
       await writeEntry('symptom', iso+'|'+encodeURIComponent(fullEntry));
       const wantsSignal = selected.has('Affectionate') || selected.has('Horny');
       if (wantsSignal) {
