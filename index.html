@@ -143,6 +143,7 @@
 </div>
 <!-- modal injected dynamically -->
 <script>
+const APP_VERSION = 'v1.0';
 const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbzSehW-_n2VdUQCtm-tyiAKSRr-NzUGAg23bVakhmXllduedpt1ZYA69J9gXl0CLrVT/exec";
 const PERIOD_DATES_FB = ["2025-07-02","2025-07-30","2025-08-23","2025-09-20","2025-10-16","2025-11-10","2025-12-09","2026-01-02","2026-01-28","2026-02-23","2026-03-26"];
 const SIGNAL_DATES_FB = [];
@@ -753,7 +754,8 @@ function render(periodDates,signalDates,symptomDates,feelingsMap,sexDates,period
     +'<button class="log-btn" onclick="haptic(\'light\');openMyNotes()" style="margin-top:0.75rem;background:var(--card-bg);color:var(--ink-mid);border:1.5px solid var(--border);box-shadow:none;">🗒 My Notes</button>'
     +'<button class="log-btn" onclick="haptic(\'light\');openIntimacy()" style="margin-top:0.75rem;background:linear-gradient(135deg,#C45E8A,#E8678A);">😏 Log intimacy</button>'
     +'<button class="signal-btn" onclick="haptic(\'light\');openSignal()">💜 Send Dan a signal</button>'
-    +'<div style="padding:1.5rem 1rem 0;font-size:11px;color:var(--ink-lt);text-align:center">Cycle data is private and stored only in a password-protected Google Sheet.</div>';
+    +'<div style="padding:1.5rem 1rem 0;font-size:11px;color:var(--ink-lt);text-align:center">Cycle data is private and stored only in a password-protected Google Sheet.</div>'
+    +'<div style="padding:0.4rem 1rem 0;font-size:10px;color:var(--ink-lt);text-align:center;opacity:0.6">' + APP_VERSION + '</div>';
 }
 
 function tapDay(iso) {
@@ -1372,8 +1374,6 @@ async function init() {
   registerServiceWorker();
   document.getElementById('app').innerHTML='<div class="loading-wrap"><div class="spinner"></div>Loading your cycle data...</div>';
   const {periodDates,signalDates,symptomDates,feelingsMap,sexDates,periodEndDates}=await fetchData();
-  console.log('DEBUG periodDates:', JSON.stringify(periodDates));
-  console.log('DEBUG avgCycleLen:', avgCycleLen(periodDates));
   render(periodDates,signalDates,symptomDates,feelingsMap,sexDates,periodEndDates);
   // Load weather after render so page isn't blocked
   fetchWeather().then(weather => {
