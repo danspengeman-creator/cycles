@@ -148,7 +148,7 @@
 </div>
 <!-- modal injected dynamically -->
 <script>
-const APP_VERSION = 'v1.9';
+const APP_VERSION = 'v2.0';
 const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbzSehW-_n2VdUQCtm-tyiAKSRr-NzUGAg23bVakhmXllduedpt1ZYA69J9gXl0CLrVT/exec";
 const PERIOD_DATES_FB = ["2025-07-02","2025-07-30","2025-08-23","2025-09-20","2025-10-16","2025-11-10","2025-12-09","2026-01-02","2026-01-28","2026-02-23","2026-03-26"];
 const SIGNAL_DATES_FB = [];
@@ -301,6 +301,96 @@ let calOffset=0, appState=null;
 const MONTHS=["January","February","March","April","May","June","July","August","September","October","November","December"];
 const DOWS=["Su","Mo","Tu","We","Th","Fr","Sa"];
 
+
+// ── SHARED PHASE-FOR-DATE LOGIC ──
+// Used by both the calendar's day coloring and My Past Notes, so a given
+// date always reports the exact same phase everywhere in the app.
+function getPhaseForDate(iso, periodDates, periodEndDates, len, lastPeriodOverride) {
+  const d = parseISOLocal(iso);
+  const lastPeriod = lastPeriodOverride || parseISOLocal(periodDates[periodDates.length - 1]);
+  const ovulationDay = Math.round(len * PHASES[2].maxPct);
+  const todayForCap = new Date(); todayForCap.setHours(0,0,0,0);
+
+  const daysSinceLastPeriod = Math.floor((d - lastPeriod) / 86400000);
+  if (daysSinceLastPeriod < 0) {
+    for (let pi = 0; pi < periodDates.length; pi++) {
+      const p = parseISOLocal(periodDates[pi]);
+      const diff = Math.floor((d - p) / 86400000);
+      const endDate = periodEndDates && periodEndDates[pi] ? parseISOLocal(periodEndDates[pi]) : null;
+      const maxDiff = endDate ? Math.floor((endDate - p) / 86400000) : 4;
+      if (diff >= 0 && diff <= maxDiff) return 'period';
+    }
+    let nearestPrior = null, nearestNext = null;
+    for (const pd of periodDates) {
+      const p = parseISOLocal(pd);
+      if (p <= d && (!nearestPrior || p > nearestPrior)) nearestPrior = p;
+      if (p > d && (!nearestNext || p < nearestNext)) nearestNext = p;
+    }
+    if (nearestPrior && nearestNext) {
+      const actualGap = Math.floor((nearestNext - nearestPrior) / 86400000);
+      const ds = Math.floor((d - nearestPrior) / 86400000);
+      const cd = ds + 1;
+      if (cd <= 5) return 'period';
+      const ovDayActual = Math.round(actualGap * PHASES[2].maxPct);
+      if (cd >= ovDayActual - 2 && cd <= ovDayActual) return 'ovulation';
+      if (cd >= ovDayActual - 5 && cd < ovDayActual - 2) return 'fertile';
+      const pct = cd / actualGap;
+      if (pct <= PHASES[1].maxPct) return 'follicular';
+      if (pct <= PHASES[3].maxPct) return 'luteal';
+      return 'pms';
+    }
+    if (nearestPrior) {
+      const ds = Math.floor((d - nearestPrior) / 86400000);
+      const cd = (ds % len) + 1;
+      if (cd <= 5) return 'period';
+      if (cd >= ovulationDay - 2 && cd <= ovulationDay) return 'ovulation';
+      if (cd >= ovulationDay - 5 && cd < ovulationDay - 2) return 'fertile';
+      const pct = cd / len;
+      if (pct <= PHASES[1].maxPct) return 'follicular';
+      if (pct <= PHASES[3].maxPct) return 'luteal';
+      return 'pms';
+    }
+    return 'follicular';
+  }
+
+  let cycD;
+  if (d <= todayForCap) {
+    cycD = Math.min(daysSinceLastPeriod + 1, len);
+  } else {
+    const todayCycD = Math.min(Math.floor((todayForCap - lastPeriod) / 86400000) + 1, len);
+    const daysAfterToday = Math.floor((d - todayForCap) / 86400000);
+    cycD = ((todayCycD - 1 + daysAfterToday) % len) + 1;
+  }
+
+  const lastEndISO = periodEndDates && periodEndDates.length ? periodEndDates[periodEndDates.length-1] : null;
+  const lastEndDate = lastEndISO ? parseISOLocal(lastEndISO) : null;
+  const periodEndDay = lastEndDate ? Math.floor((lastEndDate - lastPeriod) / 86400000) + 1 : 5;
+  if (cycD >= 1 && cycD <= periodEndDay) return 'period';
+  if (cycD >= ovulationDay - 2 && cycD <= ovulationDay) return 'ovulation';
+  if (cycD >= ovulationDay - 5 && cycD < ovulationDay - 2) return 'fertile';
+  const pct = cycD / len;
+  if (pct <= PHASES[1].maxPct) return 'follicular';
+  if (pct <= PHASES[3].maxPct) return 'luteal';
+  return 'pms';
+}
+
+function hasFreeformNote(raw) {
+  if (!raw) return false;
+  const KNOWN_LABELS = FEELINGS.map(function(f) { return f.label; });
+  if (raw.indexOf('Note:') > -1) return true;
+  const parts = raw.split(',').map(function(s) { return s.trim(); }).filter(Boolean);
+  return parts.some(function(p) { return KNOWN_LABELS.indexOf(p) === -1; });
+}
+
+const PHASE_CLASS_DISPLAY = {
+  period:     { emoji:'🌙', name:'Period',     color:'#7B4F8E' },
+  follicular: { emoji:'🌸', name:'Follicular', color:'#7A99B8' },
+  fertile:    { emoji:'🌿', name:'Fertile',    color:'#D4845A' },
+  ovulation:  { emoji:'✨', name:'Ovulation',  color:'#C45E8A' },
+  luteal:     { emoji:'🍂', name:'Luteal',     color:'#5FA67A' },
+  pms:        { emoji:'🌧', name:'PMS',        color:'#5B8DB8' }
+};
+
 function buildCalendar(periodDates,signalDates,symptomDates,feelingsMap,sexDates,periodEndDates,len,offset) {
   const today=new Date();
   const dt=new Date(today.getFullYear(),today.getMonth()+offset,1);
@@ -318,92 +408,8 @@ function buildCalendar(periodDates,signalDates,symptomDates,feelingsMap,sexDates
     return '📝';
   }
 
-  // Reference point: today, used to decide capped-current vs projected-future
-  const todayForCap = new Date(); todayForCap.setHours(0,0,0,0);
-
   function getDayClass(iso) {
-    const d = parseISOLocal(iso);
-    const ovulationDay = Math.round(len * PHASES[2].maxPct);
-
-    // Historical dates before last period: check against all logged periods
-    const daysSinceLastPeriod = Math.floor((d - lastPeriod) / 86400000);
-    if (daysSinceLastPeriod < 0) {
-      for (let pi = 0; pi < periodDates.length; pi++) {
-        const p = parseISOLocal(periodDates[pi]);
-        const diff = Math.floor((d - p) / 86400000);
-        // Use logged end date if available, else assume 5 days
-        const endDate = periodEndDates && periodEndDates[pi] ? parseISOLocal(periodEndDates[pi]) : null;
-        const maxDiff = endDate ? Math.floor((endDate - p) / 86400000) : 4;
-        if (diff >= 0 && diff <= maxDiff) return 'period';
-      }
-      // Find the bracketing logged periods: the one just before `d` and the one just after
-      let nearestPrior = null, nearestNext = null;
-      for (const pd of periodDates) {
-        const p = parseISOLocal(pd);
-        if (p <= d && (!nearestPrior || p > nearestPrior)) nearestPrior = p;
-        if (p > d && (!nearestNext || p < nearestNext)) nearestNext = p;
-      }
-      if (nearestPrior && nearestNext) {
-        // Use the ACTUAL gap between these two real logged periods, not the
-        // historical average. This alone correctly colors every day in
-        // between, including PMS days right up against the next period,
-        // without needing any further override.
-        const actualGap = Math.floor((nearestNext - nearestPrior) / 86400000);
-        const ds = Math.floor((d - nearestPrior) / 86400000);
-        const cd = ds + 1;
-        if (cd <= 5) return 'period';
-
-        const ovDayActual = Math.round(actualGap * PHASES[2].maxPct);
-        if (cd >= ovDayActual - 2 && cd <= ovDayActual) return 'ovulation';
-        if (cd >= ovDayActual - 5 && cd < ovDayActual - 2) return 'fertile';
-        const pct = cd / actualGap;
-        if (pct <= PHASES[1].maxPct) return 'follicular';
-        if (pct <= PHASES[3].maxPct) return 'luteal';
-        return 'pms';
-      }
-      if (nearestPrior) {
-        const ds = Math.floor((d - nearestPrior) / 86400000);
-        const cd = (ds % len) + 1;
-        if (cd <= 5) return 'period';
-        if (cd >= ovulationDay - 2 && cd <= ovulationDay) return 'ovulation';
-        if (cd >= ovulationDay - 5 && cd < ovulationDay - 2) return 'fertile';
-        const pct = cd / len;
-        if (pct <= PHASES[1].maxPct) return 'follicular';
-        if (pct <= PHASES[3].maxPct) return 'luteal';
-        return 'pms';
-      }
-      return 'follicular';
-    }
-
-    // Today and all past days since last logged period: cap at len.
-    // This keeps her in PMS (or wherever the capped day lands) for as long
-    // as she's overdue, no matter how many cycles' worth of days have passed,
-    // until she actually logs a new period.
-    //
-    // Only days strictly AFTER today get projected forward with modulo math,
-    // and that projection starts counting from the day immediately after
-    // today's capped position, so the future picks up exactly where "today"
-    // left off instead of jumping ahead a full cycle.
-    let cycD;
-    if (d <= todayForCap) {
-      cycD = Math.min(daysSinceLastPeriod + 1, len);
-    } else {
-      const todayCycD = Math.min(Math.floor((todayForCap - lastPeriod) / 86400000) + 1, len);
-      const daysAfterToday = Math.floor((d - todayForCap) / 86400000);
-      cycD = ((todayCycD - 1 + daysAfterToday) % len) + 1;
-    }
-
-    // Use logged end date for current cycle if available
-    const lastEndISO = periodEndDates && periodEndDates.length ? periodEndDates[periodEndDates.length-1] : null;
-    const lastEndDate = lastEndISO ? parseISOLocal(lastEndISO) : null;
-    const periodEndDay = lastEndDate ? Math.floor((lastEndDate - lastPeriod) / 86400000) + 1 : 5;
-    if (cycD >= 1 && cycD <= periodEndDay) return 'period';
-    if (cycD >= ovulationDay - 2 && cycD <= ovulationDay) return 'ovulation';
-    if (cycD >= ovulationDay - 5 && cycD < ovulationDay - 2) return 'fertile';
-    const pct = cycD / len;
-    if (pct <= PHASES[1].maxPct) return 'follicular';
-    if (pct <= PHASES[3].maxPct) return 'luteal';
-    return 'pms';
+    return getPhaseForDate(iso, periodDates, periodEndDates, len, lastPeriod);
   }
 
 
@@ -418,7 +424,7 @@ function buildCalendar(periodDates,signalDates,symptomDates,feelingsMap,sexDates
     const pc=getDayClass(iso), it=iso===todayISO?' today':'', sg=signalSet.has(iso)?' signal':'', sy=symptomSet.has(iso)?' symptom':'';
     const symEmoji=symptomSet.has(iso)?'<span style="font-size:11px;position:absolute;top:3px;left:3px;line-height:1">'+getSymptomEmoji(iso)+'</span>':'';
     const sexEmoji=sexSet.has(iso)?'<span style="font-size:11px;position:absolute;bottom:3px;left:3px;line-height:1">😏</span>':'';
-    const hasNote=feelingsMap && feelingsMap[iso] && feelingsMap[iso].includes('Note:');
+    const hasNote=feelingsMap && feelingsMap[iso] && hasFreeformNote(feelingsMap[iso]);
     const noteEmoji=hasNote?'<span style="font-size:11px;position:absolute;top:3px;right:3px;line-height:1">🗒</span>':'';
     h+='<div class="cal-day'+(pc?' '+pc:'')+it+sg+sy+'" onclick="tapDay(\''+iso+'\')">'+day+symEmoji+sexEmoji+noteEmoji+'</div>';
   }
@@ -1111,7 +1117,21 @@ function openMyNotes() {
       .slice(0, 5);
 
     if (!allNoteEntries.length) {
-      showModal('🗒 My Past Notes', '', '<div style="text-align:center;color:var(--ink-lt);font-size:14px;padding:1.5rem 0">No notes logged yet. Add one next time you log a symptom.</div><button class="mbtn cancel" onclick="closeModal()" style="margin-top:8px">Close</button>');
+      // Temporary diagnostic: show every raw row and what got extracted,
+      // so we can see exactly why nothing qualified as a note.
+      const allRows = Object.entries(feelingsMap).map(function(e) {
+        const parsed = extractNote(e[1]);
+        return '<div style="font-size:11px;color:var(--ink-mid);text-align:left;margin-bottom:6px;padding-bottom:6px;border-bottom:1px solid var(--border);word-break:break-word">'
+          + '<strong>' + e[0] + '</strong><br>raw: "' + e[1] + '"<br>extracted note: "' + parsed.noteText + '"'
+          + '</div>';
+      }).join('');
+      showModal('🗒 My Past Notes', '',
+        '<div style="text-align:center;color:var(--ink-lt);font-size:14px;padding:0.75rem 0">No notes logged yet.</div>'
+        + '<div style="background:var(--mist);border-radius:10px;padding:0.75rem;margin-top:0.5rem;text-align:left;max-height:280px;overflow-y:auto">'
+        + '<div style="font-size:11px;font-weight:600;color:var(--ink-lt);margin-bottom:6px">DEBUG: ' + Object.keys(feelingsMap).length + ' total rows</div>'
+        + (allRows || '<div style="font-size:11px;color:var(--ink-lt)">(feelingsMap is completely empty)</div>')
+        + '</div>'
+        + '<button class="mbtn cancel" onclick="closeModal()" style="margin-top:8px">Close</button>');
       return;
     }
 
@@ -1123,26 +1143,17 @@ function openMyNotes() {
       const feelingsText = entry.feelingsText;
       const dateStr = d.toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' });
 
-      // Determine which phase this note was logged during, using the
-      // nearest prior logged period date to that note's date for accuracy,
-      // falling back to the most recent period if none found.
+      // Cross-reference the EXACT same phase-determination logic the
+      // calendar itself uses, so the phase shown here always matches
+      // whatever color/phase that date shows on the calendar.
       let phaseLabel = '';
       let phaseColor = 'var(--ink-lt)';
       if (periodDates.length) {
-        let nearestPrior = null;
-        for (let pi = 0; pi < periodDates.length; pi++) {
-          const p = parseISOLocal(periodDates[pi]);
-          if (p && p <= d && (!nearestPrior || p > nearestPrior)) nearestPrior = p;
-        }
-        const anchor = nearestPrior || lastPeriod;
-        if (anchor) {
-          const daysSince = Math.floor((d - anchor) / 86400000);
-          const cycD = Math.max(1, Math.min((daysSince % len) + 1, len));
-          const phase = getPhase(cycD, len);
-          if (phase) {
-            phaseLabel = phase.emoji + ' ' + phase.name;
-            phaseColor = phase.color || 'var(--ink-lt)';
-          }
+        const phaseKey = getPhaseForDate(entry.iso, periodDates, appState.periodEndDates || [], len, lastPeriod);
+        const display = PHASE_CLASS_DISPLAY[phaseKey];
+        if (display) {
+          phaseLabel = display.emoji + ' ' + display.name;
+          phaseColor = display.color;
         }
       }
 
