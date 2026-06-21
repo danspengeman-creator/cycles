@@ -143,7 +143,7 @@
 </div>
 <!-- modal injected dynamically -->
 <script>
-const APP_VERSION = 'v1.1';
+const APP_VERSION = 'v1.2';
 const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbzSehW-_n2VdUQCtm-tyiAKSRr-NzUGAg23bVakhmXllduedpt1ZYA69J9gXl0CLrVT/exec";
 const PERIOD_DATES_FB = ["2025-07-02","2025-07-30","2025-08-23","2025-09-20","2025-10-16","2025-11-10","2025-12-09","2026-01-02","2026-01-28","2026-02-23","2026-03-26"];
 const SIGNAL_DATES_FB = [];
@@ -433,7 +433,9 @@ function buildCalendar(periodDates,signalDates,symptomDates,feelingsMap,sexDates
     const pc=getDayClass(iso), it=iso===todayISO?' today':'', sg=signalSet.has(iso)?' signal':'', sy=symptomSet.has(iso)?' symptom':'';
     const symEmoji=symptomSet.has(iso)?'<span style="font-size:11px;position:absolute;top:3px;left:3px;line-height:1">'+getSymptomEmoji(iso)+'</span>':'';
     const sexEmoji=sexSet.has(iso)?'<span style="font-size:11px;position:absolute;bottom:3px;left:3px;line-height:1">😏</span>':'';
-    h+='<div class="cal-day'+(pc?' '+pc:'')+it+sg+sy+'" onclick="tapDay(\''+iso+'\')">'+day+symEmoji+sexEmoji+'</div>';
+    const hasNote=feelingsMap && feelingsMap[iso] && feelingsMap[iso].includes('Note:');
+    const noteEmoji=hasNote?'<span style="font-size:11px;position:absolute;top:3px;right:3px;line-height:1">🗒</span>':'';
+    h+='<div class="cal-day'+(pc?' '+pc:'')+it+sg+sy+'" onclick="tapDay(\''+iso+'\')">'+day+symEmoji+sexEmoji+noteEmoji+'</div>';
   }
   h+='</div><div class="cal-legend">'
     +'<span class="leg-chip" onclick="openPhaseInfo(\'period\')"     style="background:#E8D4EE;color:#7B4F8E">🌙 Period</span>'
