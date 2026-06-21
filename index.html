@@ -148,7 +148,7 @@
 </div>
 <!-- modal injected dynamically -->
 <script>
-const APP_VERSION = 'v1.7';
+const APP_VERSION = 'v1.8';
 const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbzSehW-_n2VdUQCtm-tyiAKSRr-NzUGAg23bVakhmXllduedpt1ZYA69J9gXl0CLrVT/exec";
 const PERIOD_DATES_FB = ["2025-07-02","2025-07-30","2025-08-23","2025-09-20","2025-10-16","2025-11-10","2025-12-09","2026-01-02","2026-01-28","2026-02-23","2026-03-26"];
 const SIGNAL_DATES_FB = [];
@@ -740,7 +740,7 @@ function render(periodDates,signalDates,symptomDates,feelingsMap,sexDates,period
 
     +'<button class="log-btn" onclick="haptic(\'light\');openLog()">🩸 Log period Start / End</button>'
     +'<button class="log-btn" onclick="haptic(\'light\');openSymptom()" style="margin-top:0.75rem;background:linear-gradient(135deg,#5FA67A,#3d8a5e);">📝 Log a symptom</button>'
-    +'<button class="log-btn" onclick="haptic(\'light\');openMyNotes()" style="margin-top:0.75rem;background:var(--card-bg);color:var(--ink-mid);border:1.5px solid var(--border);box-shadow:none;">🗒 My Notes</button>'
+    +'<button class="log-btn" onclick="haptic(\'light\');openMyNotes()" style="margin-top:0.75rem;background:var(--card-bg);color:var(--ink-mid);border:1.5px solid var(--border);box-shadow:none;">🗒 My Past Notes</button>'
     +'<button class="log-btn" onclick="haptic(\'light\');openIntimacy()" style="margin-top:0.75rem;background:linear-gradient(135deg,#C45E8A,#E8678A);">😏 Log intimacy</button>'
     +'<button class="signal-btn" onclick="haptic(\'light\');openSignal()">💜 Send Dan a signal</button>'
     +'<div style="padding:1.5rem 1rem 0;font-size:11px;color:var(--ink-lt);text-align:center">Cycle data is private and stored only in a password-protected Google Sheet.</div>'
@@ -1078,7 +1078,20 @@ function openMyNotes() {
       .slice(0, 5);
 
     if (!allNoteEntries.length) {
-      showModal('🗒 My Notes', '', '<div style="text-align:center;color:var(--ink-lt);font-size:14px;padding:1.5rem 0">No notes logged yet. Add one next time you log a symptom.</div><button class="mbtn cancel" onclick="closeModal()" style="margin-top:8px">Close</button>');
+      // Temporary diagnostic: show exactly what feelingsMap contains so we
+      // can see whether the data has any entries at all, and if so, why
+      // none qualify as having a note.
+      const totalKeys = Object.keys(feelingsMap).length;
+      const sampleEntries = Object.entries(feelingsMap).slice(0, 5).map(function(e) {
+        return '<div style="font-size:11px;color:var(--ink-mid);text-align:left;margin-bottom:4px;word-break:break-word">' + e[0] + ': ' + e[1] + '</div>';
+      }).join('');
+      showModal('🗒 My Past Notes', '',
+        '<div style="text-align:center;color:var(--ink-lt);font-size:14px;padding:0.75rem 0">No notes logged yet. Add one next time you log a symptom.</div>'
+        + '<div style="background:var(--mist);border-radius:10px;padding:0.75rem;margin-top:0.5rem;text-align:left">'
+        + '<div style="font-size:11px;font-weight:600;color:var(--ink-lt);margin-bottom:6px">DEBUG: ' + totalKeys + ' total logged days found</div>'
+        + (sampleEntries || '<div style="font-size:11px;color:var(--ink-lt)">(feelingsMap is completely empty)</div>')
+        + '</div>'
+        + '<button class="mbtn cancel" onclick="closeModal()" style="margin-top:8px">Close</button>');
       return;
     }
 
@@ -1126,10 +1139,10 @@ function openMyNotes() {
         + '</div>';
     }).join('');
 
-    showModal('🗒 My Notes', 'Your last ' + allNoteEntries.length + ' note' + (allNoteEntries.length !== 1 ? 's' : ''),
+    showModal('🗒 My Past Notes', 'Your last ' + allNoteEntries.length + ' note' + (allNoteEntries.length !== 1 ? 's' : ''),
       rows + '<button class="mbtn cancel" onclick="closeModal()" style="margin-top:6px">Close</button>');
   } catch (err) {
-    showModal('🗒 My Notes', '', '<div style="text-align:center;color:var(--rose);font-size:13px;padding:1.5rem 0">Something went wrong loading your notes. Please try refreshing the page.</div><button class="mbtn cancel" onclick="closeModal()" style="margin-top:8px">Close</button>');
+    showModal('🗒 My Past Notes', '', '<div style="text-align:center;color:var(--rose);font-size:13px;padding:1.5rem 0">Something went wrong loading your notes. Please try refreshing the page.</div><button class="mbtn cancel" onclick="closeModal()" style="margin-top:8px">Close</button>');
   }
 }
 function closeModal() {
