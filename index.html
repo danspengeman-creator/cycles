@@ -148,7 +148,7 @@
 </div>
 <!-- modal injected dynamically -->
 <script>
-const APP_VERSION = 'v1.8';
+const APP_VERSION = 'v1.9';
 const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbzSehW-_n2VdUQCtm-tyiAKSRr-NzUGAg23bVakhmXllduedpt1ZYA69J9gXl0CLrVT/exec";
 const PERIOD_DATES_FB = ["2025-07-02","2025-07-30","2025-08-23","2025-09-20","2025-10-16","2025-11-10","2025-12-09","2026-01-02","2026-01-28","2026-02-23","2026-03-26"];
 const SIGNAL_DATES_FB = [];
@@ -1066,44 +1066,61 @@ function openMyNotes() {
     const periodDates = (appState && appState.periodDates) || [];
     const len = (appState && appState.len) || 28;
 
+    // Build a lookup of every known feeling label so we can identify what's
+    // left over in a cell's text as freeform note content. A "note" is any
+    // text that doesn't exactly match a known feeling label, whether or not
+    // it was tagged with "Note:" or just typed in directly.
+    const KNOWN_LABELS = FEELINGS.map(function(f) { return f.label; });
+
+    function extractNote(raw) {
+      if (!raw) return { feelingsText: '', noteText: '' };
+      let working = raw;
+
+      // If a "Note:" tag is present, split on the first pipe and treat
+      // everything after "Note:" as the note text directly.
+      const noteIdx = working.indexOf('Note:');
+      if (noteIdx > -1) {
+        const pipeIdx = working.indexOf('|');
+        const feelingsPart = pipeIdx > -1 && pipeIdx < noteIdx ? working.substring(0, pipeIdx).trim() : '';
+        const noteText = working.substring(noteIdx + 5).trim();
+        return { feelingsText: feelingsPart, noteText: noteText };
+      }
+
+      // Otherwise, parse comma-separated parts and bucket each part into
+      // either "known feeling label" or "freeform note text".
+      const parts = working.split(',').map(function(s) { return s.trim(); }).filter(Boolean);
+      const feelingParts = [];
+      const noteParts = [];
+      parts.forEach(function(p) {
+        if (KNOWN_LABELS.indexOf(p) > -1) feelingParts.push(p);
+        else noteParts.push(p);
+      });
+      return { feelingsText: feelingParts.join(', '), noteText: noteParts.join(', ') };
+    }
+
     const allNoteEntries = Object.entries(feelingsMap)
-      .filter(function(entry) { return entry[1] && entry[1].indexOf('Note:') > -1; })
       .map(function(entry) {
         const iso = entry[0];
-        const val = entry[1];
-        return { iso: iso, val: val, d: parseISOLocal(iso) };
+        const raw = entry[1];
+        const parsed = extractNote(raw);
+        return { iso: iso, raw: raw, feelingsText: parsed.feelingsText, noteText: parsed.noteText, d: parseISOLocal(iso) };
       })
+      .filter(function(e) { return e.noteText && e.noteText.length > 0; })
       .filter(function(e) { return e.d instanceof Date && !isNaN(e.d.getTime()); })
       .sort(function(a, b) { return b.d - a.d; })
       .slice(0, 5);
 
     if (!allNoteEntries.length) {
-      // Temporary diagnostic: show exactly what feelingsMap contains so we
-      // can see whether the data has any entries at all, and if so, why
-      // none qualify as having a note.
-      const totalKeys = Object.keys(feelingsMap).length;
-      const sampleEntries = Object.entries(feelingsMap).slice(0, 5).map(function(e) {
-        return '<div style="font-size:11px;color:var(--ink-mid);text-align:left;margin-bottom:4px;word-break:break-word">' + e[0] + ': ' + e[1] + '</div>';
-      }).join('');
-      showModal('🗒 My Past Notes', '',
-        '<div style="text-align:center;color:var(--ink-lt);font-size:14px;padding:0.75rem 0">No notes logged yet. Add one next time you log a symptom.</div>'
-        + '<div style="background:var(--mist);border-radius:10px;padding:0.75rem;margin-top:0.5rem;text-align:left">'
-        + '<div style="font-size:11px;font-weight:600;color:var(--ink-lt);margin-bottom:6px">DEBUG: ' + totalKeys + ' total logged days found</div>'
-        + (sampleEntries || '<div style="font-size:11px;color:var(--ink-lt)">(feelingsMap is completely empty)</div>')
-        + '</div>'
-        + '<button class="mbtn cancel" onclick="closeModal()" style="margin-top:8px">Close</button>');
+      showModal('🗒 My Past Notes', '', '<div style="text-align:center;color:var(--ink-lt);font-size:14px;padding:1.5rem 0">No notes logged yet. Add one next time you log a symptom.</div><button class="mbtn cancel" onclick="closeModal()" style="margin-top:8px">Close</button>');
       return;
     }
 
     const lastPeriod = periodDates.length ? parseISOLocal(periodDates[periodDates.length - 1]) : null;
 
     const rows = allNoteEntries.map(function(entry) {
-      const val = entry.val;
       const d = entry.d;
-      const noteIdx = val.indexOf('Note:');
-      const noteText = noteIdx > -1 ? val.substring(noteIdx + 5).trim() : '';
-      const pipeIdx = val.indexOf('|');
-      const feelingsText = pipeIdx > -1 ? val.substring(0, pipeIdx).trim() : (noteIdx === -1 ? val.trim() : '');
+      const noteText = entry.noteText;
+      const feelingsText = entry.feelingsText;
       const dateStr = d.toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' });
 
       // Determine which phase this note was logged during, using the
@@ -1135,7 +1152,7 @@ function openMyNotes() {
         + (phaseLabel ? '<div style="font-size:11px;font-weight:600;color:' + phaseColor + '">' + phaseLabel + '</div>' : '')
         + '</div>'
         + (feelingsText ? '<div style="font-size:12px;color:var(--rose);margin-bottom:4px">' + feelingsText + '</div>' : '')
-        + '<div style="font-size:14px;color:var(--ink-mid);line-height:1.5">' + (noteText || '(no note text)') + '</div>'
+        + '<div style="font-size:14px;color:var(--ink-mid);line-height:1.5">' + noteText + '</div>'
         + '</div>';
     }).join('');
 
