@@ -342,11 +342,42 @@ function buildCalendar(periodDates,signalDates,symptomDates,feelingsMap,sexDates
         const maxDiff = endDate ? Math.floor((endDate - p) / 86400000) : 4;
         if (diff >= 0 && diff <= maxDiff) return 'period';
       }
-      // For days between periods, calculate cycle day from nearest prior period
-      let nearestPrior = null;
+      // Find the bracketing logged periods: the one just before `d` and the one just after
+      let nearestPrior = null, nearestNext = null;
       for (const pd of periodDates) {
         const p = parseISOLocal(pd);
         if (p <= d && (!nearestPrior || p > nearestPrior)) nearestPrior = p;
+        if (p > d && (!nearestNext || p < nearestNext)) nearestNext = p;
+      }
+      if (nearestPrior && nearestNext) {
+        // Use the ACTUAL gap between these two real logged periods, not the historical average.
+        const actualGap = Math.floor((nearestNext - nearestPrior) / 86400000);
+        const ds = Math.floor((d - nearestPrior) / 86400000);
+        const cd = ds + 1;
+        if (cd <= 5) return 'period';
+
+        // Compute what phase this day would normally be in
+        const ovDayActual = Math.round(actualGap * PHASES[2].maxPct);
+        let computedPhase;
+        if (cd >= ovDayActual - 2 && cd <= ovDayActual) computedPhase = 'ovulation';
+        else if (cd >= ovDayActual - 5 && cd < ovDayActual - 2) computedPhase = 'fertile';
+        else {
+          const pct = cd / actualGap;
+          if (pct <= PHASES[1].maxPct) computedPhase = 'follicular';
+          else if (pct <= PHASES[3].maxPct) computedPhase = 'luteal';
+          else computedPhase = 'pms';
+        }
+
+        // Only override to Follicular for the 1-3 days immediately before the next
+        // logged period, and only if it wouldn't already naturally be Follicular.
+        // This prevents the whole gap from being recolored, just the short
+        // transition window right before the newly logged period start.
+        const daysBeforeNext = Math.floor((nearestNext - d) / 86400000);
+        if (daysBeforeNext >= 1 && daysBeforeNext <= 3 && computedPhase !== 'follicular') {
+          return 'follicular';
+        }
+
+        return computedPhase;
       }
       if (nearestPrior) {
         const ds = Math.floor((d - nearestPrior) / 86400000);
@@ -624,6 +655,8 @@ function render(periodDates,signalDates,symptomDates,feelingsMap,sexDates,period
   // Only treat as confirmed period if she actually logged one recently
   const daysSinceLastLogged = Math.floor((new Date() - parseISOLocal(periodDates[periodDates.length-1])) / 86400000);
   const periodConfirmed = onPeriod && daysSinceLastLogged <= 6;
+  // Separate, longer window specifically for allowing End logging
+  const withinEndLoggingWindow = daysSinceLastLogged <= 10;
   // Determine header phase class, check fertile window separately
   const ovDay = Math.round(len * PHASES[2].maxPct);
   const isFertileWindow = !onPeriod && dayInCycle >= ovDay - 5 && dayInCycle < ovDay - 2;
@@ -638,7 +671,7 @@ function render(periodDates,signalDates,symptomDates,feelingsMap,sexDates,period
   const nextPeriodStr=new Date(today.getTime()+nextPeriodDay*86400000).toLocaleDateString('en-US',{month:'short',day:'numeric'});
   const daysToOv=(len-14)-dayInCycle;
   // Build a map of date -> feelings for day summary
-  appState={periodDates,signalDates,symptomDates,feelingsMap:feelingsMap||{},sexDates:sexDates||[],periodEndDates:periodEndDates||[],periodConfirmed,len};
+  appState={periodDates,signalDates,symptomDates,feelingsMap:feelingsMap||{},sexDates:sexDates||[],periodEndDates:periodEndDates||[],periodConfirmed,withinEndLoggingWindow,len};
 
   // Schedule period reminder if 3 days out
   const nextPeriodDayForNotif = len - rawDaysSince % len;
@@ -717,6 +750,7 @@ function render(periodDates,signalDates,symptomDates,feelingsMap,sexDates,period
 
     +'<button class="log-btn" onclick="haptic(\'light\');openLog()">🩸 Log period Start / End</button>'
     +'<button class="log-btn" onclick="haptic(\'light\');openSymptom()" style="margin-top:0.75rem;background:linear-gradient(135deg,#5FA67A,#3d8a5e);">📝 Log a symptom</button>'
+    +'<button class="log-btn" onclick="haptic(\'light\');openMyNotes()" style="margin-top:0.75rem;background:var(--card-bg);color:var(--ink-mid);border:1.5px solid var(--border);box-shadow:none;">🗒 My Notes</button>'
     +'<button class="log-btn" onclick="haptic(\'light\');openIntimacy()" style="margin-top:0.75rem;background:linear-gradient(135deg,#C45E8A,#E8678A);">😏 Log intimacy</button>'
     +'<button class="signal-btn" onclick="haptic(\'light\');openSignal()">💜 Send Dan a signal</button>'
     +'<div style="padding:1.5rem 1rem 0;font-size:11px;color:var(--ink-lt);text-align:center">Cycle data is private and stored only in a password-protected Google Sheet.</div>';
@@ -774,14 +808,14 @@ function tapDay(iso) {
   showModal(dateStr, phase.emoji + ' Day ' + cycleDay + ' of ' + len + ' | ' + phase.name, body);
 }
 function openLog() {
-  const { periodDates, periodEndDates, periodConfirmed } = appState || {};
+  const { periodDates, periodEndDates, periodConfirmed, withinEndLoggingWindow } = appState || {};
   // Detect if she is currently on her period (confirmed) and no end logged for this cycle yet
   const lastPeriodISO = periodDates && periodDates.length ? periodDates[periodDates.length-1] : null;
   const lastEndISO = periodEndDates && periodEndDates.length ? periodEndDates[periodEndDates.length-1] : null;
   const lastPeriodDate = lastPeriodISO ? parseISOLocal(lastPeriodISO) : null;
   const lastEndDate = lastEndISO ? parseISOLocal(lastEndISO) : null;
   const endAlreadyLogged = lastEndDate && lastPeriodDate && lastEndDate >= lastPeriodDate;
-  const isLoggingEnd = periodConfirmed && !endAlreadyLogged;
+  const isLoggingEnd = withinEndLoggingWindow && !endAlreadyLogged;
 
   const today = new Date();
   const days = [];
