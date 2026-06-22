@@ -148,7 +148,7 @@
 </div>
 <!-- modal injected dynamically -->
 <script>
-const APP_VERSION = 'v2.0';
+const APP_VERSION = 'v2.1';
 const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbzSehW-_n2VdUQCtm-tyiAKSRr-NzUGAg23bVakhmXllduedpt1ZYA69J9gXl0CLrVT/exec";
 const PERIOD_DATES_FB = ["2025-07-02","2025-07-30","2025-08-23","2025-09-20","2025-10-16","2025-11-10","2025-12-09","2026-01-02","2026-01-28","2026-02-23","2026-03-26"];
 const SIGNAL_DATES_FB = [];
@@ -1117,19 +1117,9 @@ function openMyNotes() {
       .slice(0, 5);
 
     if (!allNoteEntries.length) {
-      // Temporary diagnostic: show every raw row and what got extracted,
-      // so we can see exactly why nothing qualified as a note.
-      const allRows = Object.entries(feelingsMap).map(function(e) {
-        const parsed = extractNote(e[1]);
-        return '<div style="font-size:11px;color:var(--ink-mid);text-align:left;margin-bottom:6px;padding-bottom:6px;border-bottom:1px solid var(--border);word-break:break-word">'
-          + '<strong>' + e[0] + '</strong><br>raw: "' + e[1] + '"<br>extracted note: "' + parsed.noteText + '"'
-          + '</div>';
-      }).join('');
       showModal('🗒 My Past Notes', '',
-        '<div style="text-align:center;color:var(--ink-lt);font-size:14px;padding:0.75rem 0">No notes logged yet.</div>'
-        + '<div style="background:var(--mist);border-radius:10px;padding:0.75rem;margin-top:0.5rem;text-align:left;max-height:280px;overflow-y:auto">'
-        + '<div style="font-size:11px;font-weight:600;color:var(--ink-lt);margin-bottom:6px">DEBUG: ' + Object.keys(feelingsMap).length + ' total rows</div>'
-        + (allRows || '<div style="font-size:11px;color:var(--ink-lt)">(feelingsMap is completely empty)</div>')
+        '<div style="text-align:center;color:var(--ink-lt);font-size:14px;padding:1.5rem 0">'
+        + 'No custom notes logged yet. Next time you log a symptom, add a note in the text field to see it here.'
         + '</div>'
         + '<button class="mbtn cancel" onclick="closeModal()" style="margin-top:8px">Close</button>');
       return;
@@ -1158,12 +1148,14 @@ function openMyNotes() {
       }
 
       return '<div style="background:var(--mist);border-radius:12px;padding:0.85rem 1rem;margin-bottom:8px;text-align:left">'
-        + '<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:4px">'
-        + '<div style="font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:0.05em;color:var(--ink-lt)">' + dateStr + '</div>'
-        + (phaseLabel ? '<div style="font-size:11px;font-weight:600;color:' + phaseColor + '">' + phaseLabel + '</div>' : '')
+        + '<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:6px">'
+        + '<div style="font-size:12px;font-weight:600;color:var(--ink)">' + dateStr + '</div>'
+        + (phaseLabel ? '<div style="font-size:11px;font-weight:600;padding:2px 8px;border-radius:100px;background:rgba(0,0,0,0.06);color:' + phaseColor + '">' + phaseLabel + '</div>' : '')
         + '</div>'
-        + (feelingsText ? '<div style="font-size:12px;color:var(--rose);margin-bottom:4px">' + feelingsText + '</div>' : '')
-        + '<div style="font-size:14px;color:var(--ink-mid);line-height:1.5">' + noteText + '</div>'
+        + (feelingsText ? '<div style="font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:0.04em;color:var(--ink-lt);margin-bottom:2px">Feelings logged</div>'
+          + '<div style="font-size:13px;color:var(--rose);margin-bottom:8px">' + feelingsText + '</div>' : '')
+        + (noteText ? '<div style="font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:0.04em;color:var(--ink-lt);margin-bottom:2px">Custom Note</div>'
+          + '<div style="font-size:14px;color:var(--ink-mid);line-height:1.55">' + noteText + '</div>' : '')
         + '</div>';
     }).join('');
 
