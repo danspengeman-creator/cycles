@@ -148,7 +148,7 @@
 </div>
 <!-- modal injected dynamically -->
 <script>
-const APP_VERSION = 'v2.2';
+const APP_VERSION = 'v2.3';
 const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbzSehW-_n2VdUQCtm-tyiAKSRr-NzUGAg23bVakhmXllduedpt1ZYA69J9gXl0CLrVT/exec";
 const PERIOD_DATES_FB = ["2025-07-02","2025-07-30","2025-08-23","2025-09-20","2025-10-16","2025-11-10","2025-12-09","2026-01-02","2026-01-28","2026-02-23","2026-03-26"];
 const SIGNAL_DATES_FB = [];
@@ -750,7 +750,7 @@ function render(periodDates,signalDates,symptomDates,feelingsMap,sexDates,period
     +'<button class="log-btn" onclick="haptic(\'light\');openIntimacy()" style="margin-top:0.75rem;background:linear-gradient(135deg,#C45E8A,#E8678A);">😏 Log intimacy</button>'
     +'<button class="signal-btn" onclick="haptic(\'light\');openSignal()">💜 Send Dan a signal</button>'
     +'<div style="padding:1.5rem 1rem 0;font-size:11px;color:var(--ink-lt);text-align:center">Cycle data is private and stored only in a password-protected Google Sheet.</div>'
-    +'<div style="padding:0.4rem 1rem 0;font-size:10px;color:var(--ink-lt);text-align:center;opacity:0.6">' + APP_VERSION + '</div>';
+    +'<div style="padding:0.4rem 1rem 0.5rem;text-align:center">'+'<button onclick="openChangelog()" style="background:none;border:none;font-size:11px;color:var(--ink-lt);opacity:0.7;cursor:pointer;text-decoration:underline;text-underline-offset:3px;font-family:\'DM Sans\',sans-serif;">Version ' + APP_VERSION + '</button>'+'</div>';
 }
 
 function tapDay(iso) {
@@ -1165,6 +1165,90 @@ function openMyNotes() {
     showModal('🗒 My Past Notes', '', '<div style="text-align:center;color:var(--rose);font-size:13px;padding:1.5rem 0">Something went wrong loading your notes. Please try refreshing the page.</div><button class="mbtn cancel" onclick="closeModal()" style="margin-top:8px">Close</button>');
   }
 }
+
+// ── CHANGELOG ──
+const CHANGELOG = [
+  { version: 'v2.2', date: 'Jun 2026', changes: [
+    'Increased emoji and font size in the symptom logging screen for easier mobile use'
+  ]},
+  { version: 'v2.1', date: 'Jun 2026', changes: [
+    'My Past Notes renamed and debug panel removed',
+    'Note cards now show date, phase pill, feelings logged and custom note in clean layout',
+    'Phase shown in notes now matches calendar exactly using shared phase logic'
+  ]},
+  { version: 'v2.0', date: 'Jun 2026', changes: [
+    'Built global getPhaseForDate() so calendar and notes always agree on phases',
+    'Fixed calendar note icon to detect freeform text, not just Note: tagged entries',
+    'My Past Notes now detects any non-label text as a note, not just Note: format',
+    'Note card layout updated with Feelings logged and Custom Note labels'
+  ]},
+  { version: 'v1.9', date: 'Jun 2026', changes: [
+    'My Past Notes renamed from My Notes',
+    'Note detection rebuilt to find freeform text alongside feeling labels'
+  ]},
+  { version: 'v1.8', date: 'Jun 2026', changes: [
+    'Replaced prompt() note input with in-modal textarea (fixes PWA compatibility)',
+    'Note text now preserved when tapping feeling buttons during symptom log',
+    'My Past Notes: no notes message now more informative'
+  ]},
+  { version: 'v1.7', date: 'Jun 2026', changes: [
+    'Need Pads? button now pulses with orange glow animation to draw attention'
+  ]},
+  { version: 'v1.6', date: 'Jun 2026', changes: [
+    'Calendar symptom indicator simplified to a single 📝 notepad icon for all logged feelings'
+  ]},
+  { version: 'v1.5', date: 'Jun 2026', changes: [
+    'Note input replaced with reliable textarea (prompt() fails in PWA installs)',
+    'Save button now enables when either a feeling or a note is present'
+  ]},
+  { version: 'v1.4', date: 'Jun 2026', changes: [
+    'My Past Notes rebuilt to show date, phase, feelings and note text',
+    'Limited to last 5 notes, newest first',
+    'Phase cross-referenced to calendar logic for accuracy'
+  ]},
+  { version: 'v1.3', date: 'Jun 2026', changes: [
+    'Fixed PMS coloring: days leading up to period now correctly show dark blue',
+    'Removed blanket Follicular override that was clobbering legitimate PMS days',
+    'openMyNotes function restored after going missing in a prior edit'
+  ]},
+  { version: 'v1.2', date: 'Jun 2026', changes: [
+    'PMS now stays capped (not wrapping to period) when overdue, regardless of how many cycles have passed',
+    'Future calendar projection now picks up from today&#39;s capped position, not a jumped cycle anchor',
+    'Note icon added to top-right corner of calendar days with logged notes'
+  ]},
+  { version: 'v1.1', date: 'Jun 2026', changes: [
+    'My Notes button added (now My Past Notes)',
+    'Calendar phase coloring now uses actual gap between consecutive logged periods',
+    'Period end logging window extended to 10 days, decoupled from period phase'
+  ]},
+  { version: 'v1.0', date: 'Jun 2026', changes: [
+    'Initial versioned release',
+    'Version number added to footer'
+  ]}
+];
+
+function openChangelog() {
+  const rows = CHANGELOG.map(function(entry, idx) {
+    const isLatest = idx === 0;
+    return '<div style="margin-bottom:1rem;padding-bottom:1rem;'
+      + (idx < CHANGELOG.length - 1 ? 'border-bottom:1px solid var(--border)' : '') + '">'
+      + '<div style="display:flex;align-items:center;gap:8px;margin-bottom:6px">'
+      + '<div style="font-size:13px;font-weight:600;color:var(--ink)">' + entry.version + '</div>'
+      + (isLatest ? '<div style="font-size:10px;font-weight:600;background:var(--sage);color:#fff;border-radius:100px;padding:2px 7px">Latest</div>' : '')
+      + '<div style="font-size:11px;color:var(--ink-lt);margin-left:auto">' + entry.date + '</div>'
+      + '</div>'
+      + entry.changes.map(function(c) {
+          return '<div style="display:flex;align-items:flex-start;gap:6px;font-size:13px;color:var(--ink-mid);line-height:1.5;margin-bottom:3px">'
+            + '<span style="color:var(--rose);flex-shrink:0">•</span>' + c + '</div>';
+        }).join('')
+      + '</div>';
+  }).join('');
+
+  showModal('What&#39;s new', '',
+    '<div style="max-height:360px;overflow-y:auto;text-align:left">' + rows + '</div>'
+    + '<button class="mbtn cancel" onclick="closeModal()" style="margin-top:6px">Close</button>');
+}
+
 function closeModal() {
   const el = document.getElementById('modal-overlay');
   if (el) el.remove();
