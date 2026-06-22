@@ -148,7 +148,7 @@
 </div>
 <!-- modal injected dynamically -->
 <script>
-const APP_VERSION = 'v2.1';
+const APP_VERSION = 'v2.2';
 const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbzSehW-_n2VdUQCtm-tyiAKSRr-NzUGAg23bVakhmXllduedpt1ZYA69J9gXl0CLrVT/exec";
 const PERIOD_DATES_FB = ["2025-07-02","2025-07-30","2025-08-23","2025-09-20","2025-10-16","2025-11-10","2025-12-09","2026-01-02","2026-01-28","2026-02-23","2026-03-26"];
 const SIGNAL_DATES_FB = [];
@@ -928,12 +928,12 @@ function openSymptom(isoOverride) {
       + FEELINGS.map(f => {
           const sel = selected.has(f.label);
           return '<button onclick="toggleFeeling(\''+f.label+'\')" style="'
-            +'padding:14px 8px;border-radius:14px;border:'+(sel?'2px solid var(--plum)':'1px solid var(--border)')
+            +'padding:18px 8px;border-radius:14px;border:'+(sel?'2px solid var(--plum)':'1px solid var(--border)')
             +';background:'+(sel?'#F0E6F7':'var(--mist)')
             +';color:'+(sel?'var(--plum)':'var(--ink-mid)')
-            +';font-family:\'DM Sans\',sans-serif;font-size:18px;font-weight:'+(sel?'600':'400')
+            +';font-family:\'DM Sans\',sans-serif;font-size:26px;font-weight:'+(sel?'600':'400')
             +';cursor:pointer;text-align:center;transition:all 0.1s;">'
-            +f.emoji+'<br><span style="font-size:13px">'+f.label+'</span></button>';
+            +f.emoji+'<br><span style="font-size:15px">'+f.label+'</span></button>';
         }).join('')
       + '</div>'
       + '<textarea id="customNoteInput" placeholder="Add a custom note (optional)" oninput="onNoteInput()" style="width:100%;min-height:64px;padding:12px;border-radius:14px;border:1px solid var(--border);background:var(--mist);color:var(--ink);font-family:\'DM Sans\',sans-serif;font-size:14px;resize:vertical;margin-bottom:10px;box-sizing:border-box;">' + existingNote + '</textarea>'
