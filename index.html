@@ -148,7 +148,7 @@
 </div>
 <!-- modal injected dynamically -->
 <script>
-const APP_VERSION = 'v2.4';
+const APP_VERSION = 'v2.5';
 const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbzSehW-_n2VdUQCtm-tyiAKSRr-NzUGAg23bVakhmXllduedpt1ZYA69J9gXl0CLrVT/exec";
 const PERIOD_DATES_FB = ["2025-07-02","2025-07-30","2025-08-23","2025-09-20","2025-10-16","2025-11-10","2025-12-09","2026-01-02","2026-01-28","2026-02-23","2026-03-26"];
 const SIGNAL_DATES_FB = [];
@@ -937,11 +937,11 @@ function openSymptom(isoOverride) {
         }).join('')
       + '</div>'
       + '<div style="margin-bottom:8px">'
-      + '<div style="font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:0.05em;color:var(--ink-lt);margin-bottom:6px">How did you sleep?</div>'
-      + '<div style="display:flex;gap:6px">'
-      + ['😴 Great Sleep','😑 Average Sleep','🥱 Poor Sleep'].map(function(s){
-          const isSelected = existingNote === s;
-          return '<button onclick="selectSleep(\''+s+'\')" style="flex:1;padding:10px 4px;border-radius:12px;border:'+(isSelected?'2px solid var(--plum)':'1px solid var(--border)')+';background:'+(isSelected?'#F0E6F7':'var(--mist)')+';color:'+(isSelected?'var(--plum)':'var(--ink-mid)')+';font-family:\'DM Sans\',sans-serif;font-size:12px;font-weight:'+(isSelected?'600':'400')+';cursor:pointer;text-align:center;">'+s+'</button>';
+      + '<div style="font-size:15px;font-weight:600;color:var(--ink);margin-bottom:8px">How did you sleep?</div>'
+      + '<div style="display:flex;gap:8px">'
+      + [['😴','Great','😴 Great Sleep'],['😑','Average','😑 Average Sleep'],['🥱','Poor','🥱 Poor Sleep']].map(function(s){
+          const isSelected = existingNote === s[2];
+          return '<button onclick="selectSleep(\''+s[2]+'\')" style="flex:1;padding:14px 4px;border-radius:14px;border:'+(isSelected?'2px solid var(--plum)':'1px solid var(--border)')+';background:'+(isSelected?'#F0E6F7':'var(--mist)')+';color:'+(isSelected?'var(--plum)':'var(--ink-mid)')+';font-family:\'DM Sans\',sans-serif;font-size:22px;font-weight:'+(isSelected?'600':'400')+';cursor:pointer;text-align:center;line-height:1.3;">'+s[0]+'<br><span style="font-size:14px">'+s[1]+'</span></button>';
         }).join('')
       + '</div>'
       + '</div>'
